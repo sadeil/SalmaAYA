@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, AlertTriangle, ArrowRight, Bot, CalendarCheck, Check, CheckCircle2, CircleDollarSign, ClipboardCheck, Clock3, CreditCard, FilePenLine, MessageCircle, Search, ShieldCheck, Stethoscope, UserCheck, UserRound, Users, X } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, Bot, Check, CircleDollarSign, ClipboardCheck, CreditCard, FilePenLine, MessageCircle, Search, ShieldCheck, Stethoscope, UserCheck, UserRound, Users, X } from "lucide-react";
 import { patients } from "../data/mockData";
 import { PageHeader, Progress, StatCard, Status } from "../components/UI";
 

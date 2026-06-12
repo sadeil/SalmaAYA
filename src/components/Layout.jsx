@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Activity, Bot, CalendarDays, ChevronDown, CircleDollarSign, Gamepad2, Home,
+  Bot, CalendarDays, ChevronDown, CircleDollarSign, Gamepad2, Home,
   LayoutDashboard, LogOut, Menu, MessageCircle, ShieldCheck, Sparkles, Stethoscope,
   UserRound, Users, X
 } from "lucide-react";
@@ -42,13 +42,14 @@ export function DashboardLayout({ role = "patient" }) {
   const { isArabic } = useLanguage();
   const links = role === "doctor" ? doctorLinks : role === "admin" ? adminLinks : patientLinks;
   const roleData = role === "doctor" ? ["Dr. Adam Noor", "Physiotherapist", Stethoscope] : role === "admin" ? ["Salma Admin", "Platform manager", ShieldCheck] : ["Maya Khalil", "Patient · Level 3", UserRound];
+  const RoleIcon = roleData[2];
   const location = useLocation();
   return (
     <div className="min-h-screen bg-mist">
       <aside className={`rq-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-ink p-5 text-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : isArabic ? "translate-x-full" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between"><Brand light /><button onClick={() => setOpen(false)} className="lg:hidden"><X /></button></div>
         <div className="my-7 rounded-3xl bg-white/8 p-4">
-          <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-500 text-white">{roleData[2]({ size: 20 })}</span><div><p className="text-sm font-extrabold">{roleData[0]}</p><p className="text-xs text-white/50">{roleData[1]}</p></div></div>
+          <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-500 text-white"><RoleIcon size={20} /></span><div><p className="text-sm font-extrabold">{roleData[0]}</p><p className="text-xs text-white/50">{roleData[1]}</p></div></div>
         </div>
         <nav className="space-y-1">
           {links.map(([to, label, Icon], index) => <NavLink key={`${to}-${index}`} end={index === 0} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition ${isActive ? "bg-teal-500 text-white shadow-lg shadow-black/10" : "text-white/60 hover:bg-white/5 hover:text-white"}`}><Icon size={18} />{label}</NavLink>)}

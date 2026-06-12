@@ -1,49 +1,749 @@
 import { useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+} from "recharts";
 import { motion } from "framer-motion";
-import { Activity, ArrowRight, Award, Bot, Check, CheckCircle2, CircleDollarSign, Clock3, Flame, Gamepad2, Gift, HeartPulse, Lock, Play, RotateCcw, Send, Sparkles, Star, Target, Trophy, WalletCards, Zap } from "lucide-react";
-import { exercises as initialExercises, messages as seedMessages, progressData } from "../data/mockData";
+import {
+  Activity,
+  ArrowRight,
+  Award,
+  Bot,
+  Check,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  Flame,
+  Gamepad2,
+  Gift,
+  HeartPulse,
+  Lock,
+  Play,
+  RotateCcw,
+  Send,
+  Sparkles,
+  Star,
+  Target,
+  Trophy,
+  WalletCards,
+  Zap,
+} from "lucide-react";
+import {
+  exercises as initialExercises,
+  messages as seedMessages,
+  progressData,
+} from "../data/mockData";
 import { PageHeader, Progress, StatCard, Status } from "../components/UI";
 
 export function PatientDashboard() {
-  return <><PageHeader eyebrow="Friday, 12 June" title="Good morning, Maya" description="Your body has shown up for you today. Let's return the favor." action={<button className="btn-primary"><Play size={16} /> Start today's exercises</button>} />
-    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4"><StatCard icon={Star} label="Current points" value="82 pts" note="+10 this week" /><StatCard icon={Trophy} label="Current level" value="Level 3" note="18 pts to Level 4" tone="purple" /><StatCard icon={Flame} label="Day streak" value="12 days" note="Personal best" tone="amber" /><StatCard icon={CircleDollarSign} label="Refund earned" value="5 ILS" note="12.5% returned" tone="blue" /></div>
-    <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_.6fr]"><div className="card p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><span className="pill bg-teal-50 text-teal-700"><HeartPulse size={14} /> Today's care plan</span><h2 className="mt-4 text-2xl font-extrabold">Gentle back mobility</h2><p className="mt-1 text-sm text-slate-500">5 exercises · 25 minutes · Low impact</p></div><div className="text-right"><p className="text-2xl font-extrabold">40%</p><p className="text-xs font-bold text-slate-400">2 of 5 complete</p></div></div><div className="mt-7"><Progress value={40} /></div><div className="mt-6 grid gap-3 sm:grid-cols-2">{initialExercises.slice(0,4).map((e,i) => <div key={e.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3"><span className={`grid h-10 w-10 place-items-center rounded-xl ${e.color}`}>{e.done ? <Check size={17} /> : <span className="text-xs font-extrabold">{i+1}</span>}</span><div><p className="text-sm font-extrabold">{e.name}</p><p className="text-xs text-slate-400">{e.duration} · {e.area}</p></div></div>)}</div></div>
-    <div className="card flex flex-col bg-gradient-to-br from-ink to-teal-700 text-white"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10"><Bot /></span><h3 className="mt-6 text-2xl font-extrabold">How are you feeling today?</h3><p className="mt-3 text-sm leading-6 text-white/60">Tell your AI assistant about any changes before starting your plan.</p><a href="/patient/chat" className="mt-auto flex items-center justify-between rounded-2xl bg-white/10 p-4 text-sm font-extrabold">Chat with AI <ArrowRight size={17} /></a></div></div>
-    <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_.4fr]"><ProgressChart /><div className="card"><p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">Health focus</p><h3 className="mt-3 text-xl font-extrabold">Lower back tension</h3><p className="mt-2 text-sm leading-6 text-slate-500">Your reported discomfort is down from 6 to 4 this month.</p><div className="mt-6"><div className="mb-2 flex justify-between text-xs font-bold"><span>Recovery confidence</span><span>72%</span></div><Progress value={72} color="bg-violet-500" /></div></div></div></>;
+  return (
+    <>
+      <PageHeader
+        eyebrow="Friday, 12 June"
+        title="Good morning, Maya"
+        description="Your body has shown up for you today. Let's return the favor."
+        action={
+          <button className="btn-primary">
+            <Play size={16} /> Start today's exercises
+          </button>
+        }
+      />
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          icon={Star}
+          label="Current points"
+          value="82 pts"
+          note="+10 this week"
+        />
+        <StatCard
+          icon={Trophy}
+          label="Current level"
+          value="Level 3"
+          note="18 pts to Level 4"
+          tone="purple"
+        />
+        <StatCard
+          icon={Flame}
+          label="Day streak"
+          value="12 days"
+          note="Personal best"
+          tone="amber"
+        />
+        <StatCard
+          icon={CircleDollarSign}
+          label="Refund earned"
+          value="5 ILS"
+          note="12.5% returned"
+          tone="blue"
+        />
+      </div>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_.6fr]">
+        <div className="card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span className="pill bg-teal-50 text-teal-700">
+                <HeartPulse size={14} /> Today's care plan
+              </span>
+              <h2 className="mt-4 text-2xl font-extrabold">
+                Gentle back mobility
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                5 exercises · 25 minutes · Low impact
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-extrabold">40%</p>
+              <p className="text-xs font-bold text-slate-400">
+                2 of 5 complete
+              </p>
+            </div>
+          </div>
+          <div className="mt-7">
+            <Progress value={40} />
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {initialExercises.slice(0, 4).map((e, i) => (
+              <div
+                key={e.id}
+                className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3"
+              >
+                <span
+                  className={`grid h-10 w-10 place-items-center rounded-xl ${e.color}`}
+                >
+                  {e.done ? (
+                    <Check size={17} />
+                  ) : (
+                    <span className="text-xs font-extrabold">{i + 1}</span>
+                  )}
+                </span>
+                <div>
+                  <p className="text-sm font-extrabold">{e.name}</p>
+                  <p className="text-xs text-slate-400">
+                    {e.duration} · {e.area}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card flex flex-col bg-gradient-to-br from-ink to-teal-700 text-white">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10">
+            <Bot />
+          </span>
+          <h3 className="mt-6 text-2xl font-extrabold">
+            How are you feeling today?
+          </h3>
+          <p className="mt-3 text-sm leading-6 text-white/60">
+            Tell your AI assistant about any changes before starting your plan.
+          </p>
+          <a
+            href="/patient/chat"
+            className="mt-auto flex items-center justify-between rounded-2xl bg-white/10 p-4 text-sm font-extrabold"
+          >
+            Chat with AI <ArrowRight size={17} />
+          </a>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_.4fr]">
+        <ProgressChart />
+        <div className="card">
+          <p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">
+            Health focus
+          </p>
+          <h3 className="mt-3 text-xl font-extrabold">Lower back tension</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Your reported discomfort is down from 6 to 4 this month.
+          </p>
+          <div className="mt-6">
+            <div className="mb-2 flex justify-between text-xs font-bold">
+              <span>Recovery confidence</span>
+              <span>72%</span>
+            </div>
+            <Progress value={72} color="bg-violet-500" />
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
 
 function ProgressChart() {
-  return <div className="card"><div className="mb-5 flex justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">Movement score</p><h3 className="mt-2 text-xl font-extrabold">Your week in motion</h3></div><span className="pill h-fit bg-teal-50 text-teal-700">+18%</span></div><div className="h-64"><ResponsiveContainer width="100%" height="100%"><AreaChart data={progressData}><defs><linearGradient id="score" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#20a88a" stopOpacity={.35}/><stop offset="100%" stopColor="#20a88a" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8eeee" /><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill:"#94a3b8", fontSize: 11 }} /><Tooltip /><Area type="monotone" dataKey="score" stroke="#20a88a" strokeWidth={3} fill="url(#score)" /></AreaChart></ResponsiveContainer></div></div>;
+  return (
+    <div className="card">
+      <div className="mb-5 flex justify-between">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">
+            Movement score
+          </p>
+          <h3 className="mt-2 text-xl font-extrabold">Your week in motion</h3>
+        </div>
+        <span className="pill h-fit bg-teal-50 text-teal-700">+18%</span>
+      </div>
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={progressData}>
+            <defs>
+              <linearGradient id="score" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#20a88a" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#20a88a" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#e8eeee"
+            />
+            <XAxis
+              dataKey="day"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#94a3b8", fontSize: 11 }}
+            />
+            <Tooltip />
+            <Area
+              type="monotone"
+              dataKey="score"
+              stroke="#20a88a"
+              strokeWidth={3}
+              fill="url(#score)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 export function ExerciseSchedule() {
   const [items, setItems] = useState(initialExercises);
-  const done = items.filter(x => x.done).length;
-  return <><PageHeader eyebrow="Daily plan" title="Today's movement quest" description="Move gently and stop if an exercise causes sharp or unusual pain." action={<span className="pill bg-teal-50 text-teal-700"><Clock3 size={15} /> 25 minutes</span>} />
-    <div className="card mb-5 flex flex-col gap-4 md:flex-row md:items-center"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-600"><Target /></span><div className="flex-1"><div className="mb-2 flex justify-between text-sm font-extrabold"><span>{done} of {items.length} exercises complete</span><span>{Math.round(done/items.length*100)}%</span></div><Progress value={done/items.length*100} /></div><span className="pill bg-amber-50 text-amber-700">+5 points each</span></div>
-    <div className="grid gap-5 lg:grid-cols-2">{items.map(e => <motion.div layout key={e.id} className={`card p-6 ${e.done ? "border-teal-200 bg-teal-50/30" : ""}`}><div className="flex items-start justify-between"><span className={`grid h-12 w-12 place-items-center rounded-2xl ${e.color}`}>{e.done ? <CheckCircle2 /> : <Activity />}</span><Status>{e.done ? "Completed" : "Not completed"}</Status></div><h3 className="mt-5 text-xl font-extrabold">{e.name}</h3><p className="mt-1 text-sm text-slate-500">{e.area}</p><div className="my-5 grid grid-cols-3 gap-2">{[[e.duration,"Duration"],[e.sets,"Sets"],[e.reps,"Reps"]].map(([v,l]) => <div key={l} className="rounded-2xl bg-slate-50 p-3 text-center"><p className="font-extrabold">{v}</p><p className="text-[10px] font-bold uppercase text-slate-400">{l}</p></div>)}</div><p className="text-xs leading-5 text-slate-500">Move slowly through a comfortable range, breathe steadily, and keep your posture relaxed.</p><button onClick={() => setItems(items.map(x => x.id === e.id ? {...x, done:!x.done} : x))} className={e.done ? "btn-soft mt-5 w-full" : "btn-primary mt-5 w-full"}>{e.done ? <><RotateCcw size={16} /> Mark incomplete</> : <><Check size={16} /> Complete exercise</>}</button></motion.div>)}</div></>;
+  const done = items.filter((x) => x.done).length;
+  return (
+    <>
+      <PageHeader
+        eyebrow="Daily plan"
+        title="Today's movement quest"
+        description="Move gently and stop if an exercise causes sharp or unusual pain."
+        action={
+          <span className="pill bg-teal-50 text-teal-700">
+            <Clock3 size={15} /> 25 minutes
+          </span>
+        }
+      />
+      <div className="card mb-5 flex flex-col gap-4 md:flex-row md:items-center">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-600">
+          <Target />
+        </span>
+        <div className="flex-1">
+          <div className="mb-2 flex justify-between text-sm font-extrabold">
+            <span>
+              {done} of {items.length} exercises complete
+            </span>
+            <span>{Math.round((done / items.length) * 100)}%</span>
+          </div>
+          <Progress value={(done / items.length) * 100} />
+        </div>
+        <span className="pill bg-amber-50 text-amber-700">+5 points each</span>
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {items.map((e) => (
+          <motion.div
+            layout
+            key={e.id}
+            className={`card p-6 ${e.done ? "border-teal-200 bg-teal-50/30" : ""}`}
+          >
+            <div className="flex items-start justify-between">
+              <span
+                className={`grid h-12 w-12 place-items-center rounded-2xl ${e.color}`}
+              >
+                {e.done ? <CheckCircle2 /> : <Activity />}
+              </span>
+              <Status>{e.done ? "Completed" : "Not completed"}</Status>
+            </div>
+            <h3 className="mt-5 text-xl font-extrabold">{e.name}</h3>
+            <p className="mt-1 text-sm text-slate-500">{e.area}</p>
+            <div className="my-5 grid grid-cols-3 gap-2">
+              {[
+                [e.duration, "Duration"],
+                [e.sets, "Sets"],
+                [e.reps, "Reps"],
+              ].map(([v, l]) => (
+                <div
+                  key={l}
+                  className="rounded-2xl bg-slate-50 p-3 text-center"
+                >
+                  <p className="font-extrabold">{v}</p>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">
+                    {l}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-5 text-slate-500">
+              Move slowly through a comfortable range, breathe steadily, and
+              keep your posture relaxed.
+            </p>
+            <button
+              onClick={() =>
+                setItems(
+                  items.map((x) =>
+                    x.id === e.id ? { ...x, done: !x.done } : x,
+                  ),
+                )
+              }
+              className={
+                e.done ? "btn-soft mt-5 w-full" : "btn-primary mt-5 w-full"
+              }
+            >
+              {e.done ? (
+                <>
+                  <RotateCcw size={16} /> Mark incomplete
+                </>
+              ) : (
+                <>
+                  <Check size={16} /> Complete exercise
+                </>
+              )}
+            </button>
+          </motion.div>
+        ))}
+      </div>
+    </>
+  );
 }
 
 export function AIChat() {
   const [messages, setMessages] = useState(seedMessages);
   const [text, setText] = useState("");
-  const send = () => { if (!text.trim()) return; setMessages([...messages, {from:"user", text}]); setText(""); };
-  return <><PageHeader eyebrow="AI health assistant" title="Let's understand how you feel" description="Your answers help prepare a suggested plan for doctor review." />
-    <div className="grid gap-5 xl:grid-cols-[1fr_.38fr]"><div className="card flex min-h-[650px] flex-col p-0 overflow-hidden"><div className="flex items-center gap-3 border-b p-5"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-600"><Bot /></span><div><p className="text-sm font-extrabold">Remy · Health Assistant</p><p className="flex items-center gap-1 text-xs text-teal-600"><span className="h-2 w-2 rounded-full bg-teal-500" /> Online</p></div><span className="pill ml-auto bg-violet-50 text-violet-700"><Sparkles size={13} /> AI placeholder</span></div><div className="no-scrollbar flex-1 space-y-4 overflow-y-auto bg-slate-50/60 p-5">{messages.map((m,i) => <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm leading-6 ${m.from === "user" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-white shadow-card"}`}>{m.text}</div></motion.div>)}</div><div className="border-t bg-white p-4"><div className="flex gap-2"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} className="field" placeholder="Describe how you feel..." /><button onClick={send} className="btn-primary px-4"><Send size={18} /></button></div></div></div>
-    <div className="space-y-5"><div className="card"><span className="pill bg-teal-50 text-teal-700"><CheckCircle2 size={14} /> Intake summary</span><h3 className="mt-5 text-lg font-extrabold">Suggested care path</h3><div className="mt-5 space-y-4 text-sm">{[["Problem","Lower back tension"],["Pain level","4 / 10"],["Daily time","25 minutes"],["Plan","Gentle mobility"],["Exercises","5 daily"]].map(([a,b]) => <div key={a} className="flex justify-between border-b pb-3 last:border-0"><span className="text-slate-400">{a}</span><span className="font-bold">{b}</span></div>)}</div><button className="btn-primary mt-4 w-full">Send for doctor review</button></div><div className="card border-amber-200 bg-amber-50"><p className="flex gap-2 text-sm font-extrabold text-amber-800"><ShieldCheckIcon /> Safety note</p><p className="mt-2 text-xs leading-5 text-amber-700">This platform provides general therapeutic exercise guidance and does not replace consultation with a doctor or physical therapist.</p></div></div></div></>;
+  const send = () => {
+    if (!text.trim()) return;
+    setMessages([...messages, { from: "user", text }]);
+    setText("");
+  };
+  return (
+    <>
+      <PageHeader
+        eyebrow="AI health assistant"
+        title="Let's understand how you feel"
+        description="Your answers help prepare a suggested plan for doctor review."
+      />
+      <div className="grid gap-5 xl:grid-cols-[1fr_.38fr]">
+        <div className="card flex min-h-[650px] flex-col p-0 overflow-hidden">
+          <div className="flex items-center gap-3 border-b p-5">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-600">
+              <Bot />
+            </span>
+            <div>
+              <p className="text-sm font-extrabold">Remy · Health Assistant</p>
+              <p className="flex items-center gap-1 text-xs text-teal-600">
+                <span className="h-2 w-2 rounded-full bg-teal-500" /> Online
+              </p>
+            </div>
+            <span className="pill ml-auto bg-violet-50 text-violet-700">
+              <Sparkles size={13} /> AI placeholder
+            </span>
+          </div>
+          <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto bg-slate-50/60 p-5">
+            {messages.map((m, i) => (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={i}
+                className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm leading-6 ${m.from === "user" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-white shadow-card"}`}
+                >
+                  {m.text}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="border-t bg-white p-4">
+            <div className="flex gap-2">
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+                className="field"
+                placeholder="Describe how you feel..."
+              />
+              <button onClick={send} className="btn-primary px-4">
+                <Send size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-5">
+          <div className="card">
+            <span className="pill bg-teal-50 text-teal-700">
+              <CheckCircle2 size={14} /> Intake summary
+            </span>
+            <h3 className="mt-5 text-lg font-extrabold">Suggested care path</h3>
+            <div className="mt-5 space-y-4 text-sm">
+              {[
+                ["Problem", "Lower back tension"],
+                ["Pain level", "4 / 10"],
+                ["Daily time", "25 minutes"],
+                ["Plan", "Gentle mobility"],
+                ["Exercises", "5 daily"],
+              ].map(([a, b]) => (
+                <div
+                  key={a}
+                  className="flex justify-between border-b pb-3 last:border-0"
+                >
+                  <span className="text-slate-400">{a}</span>
+                  <span className="font-bold">{b}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn-primary mt-4 w-full">
+              Send for doctor review
+            </button>
+          </div>
+          <div className="card border-amber-200 bg-amber-50">
+            <p className="flex gap-2 text-sm font-extrabold text-amber-800">
+              <ShieldCheckIcon /> Safety note
+            </p>
+            <p className="mt-2 text-xs leading-5 text-amber-700">
+              This platform provides general therapeutic exercise guidance and
+              does not replace consultation with a doctor or physical therapist.
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
 const ShieldCheckIcon = () => <Lock size={17} />;
 
 export function Gamification() {
-  const badges = [[Flame,"12-day streak","Earned"],[Zap,"Quick starter","Earned"],[Trophy,"Level three","Earned"],[HeartPulse,"Mobility hero","Next"],[Award,"Consistency pro","Locked"],[Star,"Quest master","Locked"]];
-  return <><PageHeader eyebrow="Quest & rewards" title="Your recovery, leveled up" description="Every completed exercise moves you closer to stronger habits and your next reward." /><div className="grid gap-5 lg:grid-cols-[1fr_.42fr]"><div className="card relative overflow-hidden bg-gradient-to-br from-ink to-teal-700 p-8 text-white"><div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl" /><span className="pill bg-white/10 text-teal-100"><Gamepad2 size={15}/> Current quest</span><h2 className="mt-8 text-4xl font-extrabold">Level 3</h2><p className="mt-2 text-white/50">Mobility Builder · 82 points</p><div className="mt-8"><div className="mb-3 flex justify-between text-xs font-bold"><span>18 points to Level 4</span><span>82%</span></div><Progress value={82} color="bg-teal-300" /></div><div className="mt-8 grid grid-cols-3 gap-3">{[["12","Day streak"],["38","Exercises"],["5 ILS","Earned"]].map(([v,l]) => <div key={l} className="rounded-2xl bg-white/10 p-4"><p className="text-xl font-extrabold">{v}</p><p className="mt-1 text-xs text-white/50">{l}</p></div>)}</div></div><div className="card flex flex-col items-center justify-center text-center"><span className="grid h-16 w-16 place-items-center rounded-3xl bg-amber-50 text-amber-500"><Gift size={30}/></span><p className="mt-5 text-xs font-extrabold uppercase tracking-widest text-slate-400">Next reward</p><h3 className="mt-2 text-xl font-extrabold">5 ILS refund</h3><p className="mt-2 text-sm text-slate-500">Unlock at 100 points</p></div></div><h2 className="mb-5 mt-8 text-xl font-extrabold">Badge collection</h2><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{badges.map(([Icon,t,s],i)=><div key={t} className={`card flex items-center gap-4 ${s==="Locked"?"opacity-50 grayscale":""}`}><span className={`grid h-14 w-14 place-items-center rounded-2xl ${i%2?"bg-violet-50 text-violet-600":"bg-amber-50 text-amber-600"}`}><Icon/></span><div><p className="font-extrabold">{t}</p><p className="mt-1 text-xs font-bold text-slate-400">{s}</p></div></div>)}</div></>;
+  const badges = [
+    [Flame, "12-day streak", "Earned"],
+    [Zap, "Quick starter", "Earned"],
+    [Trophy, "Level three", "Earned"],
+    [HeartPulse, "Mobility hero", "Next"],
+    [Award, "Consistency pro", "Locked"],
+    [Star, "Quest master", "Locked"],
+  ];
+  return (
+    <>
+      <PageHeader
+        eyebrow="Quest & rewards"
+        title="Your recovery, leveled up"
+        description="Every completed exercise moves you closer to stronger habits and your next reward."
+      />
+      <StageJourney />
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_.42fr]">
+        <div className="card relative overflow-hidden bg-gradient-to-br from-ink to-teal-700 p-8 text-white">
+          <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl" />
+          <span className="pill bg-white/10 text-teal-100">
+            <Gamepad2 size={15} /> Current quest
+          </span>
+          <h2 className="mt-8 text-4xl font-extrabold">Stage 3</h2>
+          <p className="mt-2 text-white/50">Mobility Builder · 82 points</p>
+          <div className="mt-8">
+            <div className="mb-3 flex justify-between text-xs font-bold">
+              <span>18 points to Stage 4</span>
+              <span>82%</span>
+            </div>
+            <Progress value={82} color="bg-teal-300" />
+          </div>
+          <div className="mt-8 grid grid-cols-3 gap-3">
+            {[
+              ["12", "Day streak"],
+              ["38", "Exercises"],
+              ["5 ILS", "Earned"],
+            ].map(([v, l]) => (
+              <div key={l} className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xl font-extrabold">{v}</p>
+                <p className="mt-1 text-xs text-white/50">{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card flex flex-col items-center justify-center text-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-amber-50 text-amber-500">
+            <Gift size={30} />
+          </span>
+          <p className="mt-5 text-xs font-extrabold uppercase tracking-widest text-slate-400">
+            Next reward
+          </p>
+          <h3 className="mt-2 text-xl font-extrabold">5 ILS refund</h3>
+          <p className="mt-2 text-sm text-slate-500">Unlock at 100 points</p>
+        </div>
+      </div>
+      <h2 className="mb-5 mt-8 text-xl font-extrabold">Badge collection</h2>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {badges.map(([Icon, t, s], i) => (
+          <div
+            key={t}
+            className={`card flex items-center gap-4 ${s === "Locked" ? "opacity-50 grayscale" : ""}`}
+          >
+            <span
+              className={`grid h-14 w-14 place-items-center rounded-2xl ${i % 2 ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}
+            >
+              <Icon />
+            </span>
+            <div>
+              <p className="font-extrabold">{t}</p>
+              <p className="mt-1 text-xs font-bold text-slate-400">{s}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function StageJourney() {
+  const stages = [
+    { number: 1, points: "15 pts", reward: "5 ILS", state: "complete" },
+    { number: 2, points: "40 pts", reward: "Badge", state: "complete" },
+    { number: 3, points: "75 pts", reward: "Current", state: "current" },
+    { number: 4, points: "100 pts", reward: "5 ILS", state: "locked" },
+    { number: 5, points: "150 pts", reward: "Mystery reward", state: "locked" },
+  ];
+
+  return (
+    <section className="card overflow-hidden p-0">
+      <div className="flex flex-col gap-3 border-b bg-gradient-to-r from-teal-50 via-white to-violet-50 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[.18em] text-teal-600">
+            Recovery stages
+          </p>
+          <h2 className="mt-2 text-2xl font-extrabold">
+            Your path to the next milestone
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Complete exercises and move through every stage.
+          </p>
+        </div>
+        <span className="pill h-fit bg-white text-teal-700 shadow-card">
+          <Trophy size={15} /> 2 stages completed
+        </span>
+      </div>
+      <div className="no-scrollbar overflow-x-auto px-6 py-10">
+        <div className="mx-auto flex min-w-[760px] max-w-5xl items-start">
+          {stages.map((stage, index) => (
+            <div key={stage.number} className="flex min-w-0 flex-1 items-start">
+              <div className="relative z-10 flex w-32 shrink-0 flex-col items-center text-center">
+                {stage.state === "current" && (
+                  <motion.span
+                    animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.1, 0.35] }}
+                    transition={{ duration: 2.2, repeat: Infinity }}
+                    className="absolute top-0 h-24 w-24 rounded-full bg-teal-400"
+                  />
+                )}
+                <motion.div
+                  whileHover={{ scale: 1.07 }}
+                  className={`relative grid h-24 w-24 place-items-center rounded-full border-[7px] shadow-lg transition ${
+                    stage.state === "complete"
+                      ? "border-teal-100 bg-teal-500 text-white shadow-teal-200/70"
+                      : stage.state === "current"
+                        ? "border-teal-100 bg-ink text-white shadow-teal-300/70"
+                        : "border-slate-100 bg-slate-50 text-slate-300 shadow-slate-100"
+                  }`}
+                >
+                  {stage.state === "complete" ? (
+                    <Check size={30} strokeWidth={3} />
+                  ) : stage.state === "locked" ? (
+                    <Lock size={24} />
+                  ) : (
+                    <>
+                      <span className="absolute top-3 text-[9px] font-extrabold uppercase tracking-widest text-teal-200">
+                        Stage
+                      </span>
+                      <span className="mt-3 text-3xl font-extrabold">
+                        {stage.number}
+                      </span>
+                    </>
+                  )}
+                  {stage.state === "current" && (
+                    <span className="absolute -bottom-3 whitespace-nowrap rounded-full bg-amber-400 px-3 py-1 text-[9px] font-extrabold uppercase tracking-wide text-ink shadow-md">
+                      You are here
+                    </span>
+                  )}
+                </motion.div>
+                <p
+                  className={`mt-5 text-sm font-extrabold ${stage.state === "locked" ? "text-slate-400" : "text-ink"}`}
+                >
+                  Stage {stage.number}
+                </p>
+                <p className="mt-1 text-xs font-bold text-slate-400">
+                  {stage.points}
+                </p>
+                <span
+                  className={`pill mt-3 ${
+                    stage.state === "locked"
+                      ? "bg-slate-100 text-slate-400"
+                      : stage.state === "current"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-teal-50 text-teal-700"
+                  }`}
+                >
+                  <Gift size={12} />
+                  {stage.reward}
+                </span>
+              </div>
+              {index < stages.length - 1 && (
+                <div className="relative mt-11 h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{
+                      width:
+                        stage.state === "complete"
+                          ? "100%"
+                          : stage.state === "current"
+                            ? "35%"
+                            : "0%",
+                    }}
+                    transition={{ duration: 0.8, delay: index * 0.12 }}
+                    className="h-full rounded-full bg-gradient-to-r from-teal-500 to-teal-300"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function Refunds() {
-  return <><PageHeader eyebrow="Refund wallet" title="Consistency pays back" description="Reach milestones through your care plan to reclaim part of your subscription." action={<button className="btn-primary"><WalletCards size={17}/> Claim available refund</button>} /><div className="grid gap-5 sm:grid-cols-3"><StatCard icon={CircleDollarSign} label="Subscription amount" value="40 ILS" /><StatCard icon={Gift} label="Earned refund" value="5 ILS" note="Available to claim" tone="amber" /><StatCard icon={WalletCards} label="Remaining refundable" value="35 ILS" tone="purple" /></div><div className="card mt-5"><div className="flex items-center justify-between"><div><p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Refund journey</p><h3 className="mt-2 text-xl font-extrabold">12.5% of subscription recovered</h3></div><p className="text-2xl font-extrabold text-teal-600">5 / 40</p></div><div className="mt-6"><Progress value={12.5}/></div></div><div className="card mt-5 overflow-x-auto"><h3 className="mb-5 text-xl font-extrabold">Reward history</h3><table className="w-full min-w-[650px] text-left text-sm"><thead className="text-xs uppercase tracking-wide text-slate-400"><tr><th className="pb-4">Reward</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>{[["Level 1 milestone","May 16, 2026","5 ILS","Approved"],["Level 2 milestone","June 8, 2026","5 ILS","Pending"]].map(r=><tr key={r[0]} className="border-t"><td className="py-5 font-extrabold">{r[0]}</td><td>{r[1]}</td><td className="font-bold">{r[2]}</td><td><Status>{r[3]}</Status></td></tr>)}</tbody></table></div></>;
+  return (
+    <>
+      <PageHeader
+        eyebrow="Refund wallet"
+        title="Consistency pays back"
+        description="Reach milestones through your care plan to reclaim part of your subscription."
+        action={
+          <button className="btn-primary">
+            <WalletCards size={17} /> Claim available refund
+          </button>
+        }
+      />
+      <div className="grid gap-5 sm:grid-cols-3">
+        <StatCard
+          icon={CircleDollarSign}
+          label="Subscription amount"
+          value="40 ILS"
+        />
+        <StatCard
+          icon={Gift}
+          label="Earned refund"
+          value="5 ILS"
+          note="Available to claim"
+          tone="amber"
+        />
+        <StatCard
+          icon={WalletCards}
+          label="Remaining refundable"
+          value="35 ILS"
+          tone="purple"
+        />
+      </div>
+      <div className="card mt-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
+              Refund journey
+            </p>
+            <h3 className="mt-2 text-xl font-extrabold">
+              12.5% of subscription recovered
+            </h3>
+          </div>
+          <p className="text-2xl font-extrabold text-teal-600">5 / 40</p>
+        </div>
+        <div className="mt-6">
+          <Progress value={12.5} />
+        </div>
+      </div>
+      <div className="card mt-5 overflow-x-auto">
+        <h3 className="mb-5 text-xl font-extrabold">Reward history</h3>
+        <table className="w-full min-w-[650px] text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-slate-400">
+            <tr>
+              <th className="pb-4">Reward</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["Level 1 milestone", "May 16, 2026", "5 ILS", "Approved"],
+              ["Level 2 milestone", "June 8, 2026", "5 ILS", "Pending"],
+            ].map((r) => (
+              <tr key={r[0]} className="border-t">
+                <td className="py-5 font-extrabold">{r[0]}</td>
+                <td>{r[1]}</td>
+                <td className="font-bold">{r[2]}</td>
+                <td>
+                  <Status>{r[3]}</Status>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
 
 export function MessagesPage() {
-  return <><PageHeader eyebrow="Messages" title="Your care conversation" description="Stay connected with your doctor between reviews." /><div className="card grid min-h-[650px] overflow-hidden p-0 md:grid-cols-[280px_1fr]"><aside className="border-r bg-slate-50/60 p-4"><input className="field mb-4" placeholder="Search conversations" /><div className="rounded-2xl bg-white p-3 shadow-card"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-100 font-extrabold text-violet-700">AN</span><div><p className="text-sm font-extrabold">Dr. Adam Noor</p><p className="text-xs text-slate-400">Your plan looks good...</p></div></div></div></aside><section className="flex flex-col"><div className="border-b p-5"><p className="font-extrabold">Dr. Adam Noor</p><p className="text-xs text-teal-600">Usually replies within a day</p></div><div className="flex-1 space-y-4 p-5"><div className="max-w-md rounded-3xl rounded-bl-md bg-slate-100 p-4 text-sm leading-6">Hi Maya, your progress this week looks strong. How did the lower back mobility exercise feel?</div><div className="ml-auto max-w-md rounded-3xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white">Much better. I feel less tight after work now.</div></div><div className="flex gap-2 border-t p-4"><input className="field" placeholder="Write a message..." /><button className="btn-primary px-4"><Send size={18}/></button></div></section></div></>;
+  return (
+    <>
+      <PageHeader
+        eyebrow="Messages"
+        title="Your care conversation"
+        description="Stay connected with your doctor between reviews."
+      />
+      <div className="card grid min-h-[650px] overflow-hidden p-0 md:grid-cols-[280px_1fr]">
+        <aside className="border-r bg-slate-50/60 p-4">
+          <input className="field mb-4" placeholder="Search conversations" />
+          <div className="rounded-2xl bg-white p-3 shadow-card">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-100 font-extrabold text-violet-700">
+                AN
+              </span>
+              <div>
+                <p className="text-sm font-extrabold">Dr. Adam Noor</p>
+                <p className="text-xs text-slate-400">
+                  Your plan looks good...
+                </p>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <section className="flex flex-col">
+          <div className="border-b p-5">
+            <p className="font-extrabold">Dr. Adam Noor</p>
+            <p className="text-xs text-teal-600">
+              Usually replies within a day
+            </p>
+          </div>
+          <div className="flex-1 space-y-4 p-5">
+            <div className="max-w-md rounded-3xl rounded-bl-md bg-slate-100 p-4 text-sm leading-6">
+              Hi Maya, your progress this week looks strong. How did the lower
+              back mobility exercise feel?
+            </div>
+            <div className="ml-auto max-w-md rounded-3xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white">
+              Much better. I feel less tight after work now.
+            </div>
+          </div>
+          <div className="flex gap-2 border-t p-4">
+            <input className="field" placeholder="Write a message..." />
+            <button className="btn-primary px-4">
+              <Send size={18} />
+            </button>
+          </div>
+        </section>
+      </div>
+    </>
+  );
 }

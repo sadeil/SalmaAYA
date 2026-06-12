@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,3 +26,16 @@
 }
 .gradient-text { background: linear-gradient(110deg, #173a3a 20%, #20a88a 60%, #8e82d9); -webkit-background-clip: text; color: transparent; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+[dir="rtl"] body { font-family: "Tajawal", "Segoe UI", sans-serif; }
+[dir="rtl"] .rq-sidebar { left: auto; right: 0; }
+[dir="rtl"] .rq-main { padding-left: 0; }
+[dir="rtl"] .header-actions { margin-left: 0; margin-right: auto; }
+[dir="rtl"] table { text-align: right; }
+[dir="rtl"] input, [dir="rtl"] textarea, [dir="rtl"] select { text-align: right; }
+[dir="rtl"] .language-toggle { direction: ltr; }
+[dir="rtl"] .gradient-text { direction: rtl; display: inline-block; }
+
+@media (min-width: 1024px) {
+  [dir="rtl"] .rq-main { padding-right: 18rem; }
+}

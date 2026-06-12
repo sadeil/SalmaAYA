@@ -38,6 +38,7 @@ import {
   progressData,
 } from "../data/mockData";
 import { PageHeader, Progress, StatCard, Status } from "../components/UI";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function PatientDashboard() {
   return (
@@ -220,6 +221,7 @@ function ProgressChart() {
 
 export function ExerciseSchedule() {
   const [items, setItems] = useState(initialExercises);
+  const { isArabic } = useLanguage();
   const done = items.filter((x) => x.done).length;
   return (
     <>
@@ -239,9 +241,7 @@ export function ExerciseSchedule() {
         </span>
         <div className="flex-1">
           <div className="mb-2 flex justify-between text-sm font-extrabold">
-            <span>
-              {done} of {items.length} exercises complete
-            </span>
+            <span>{isArabic ? `اكتمل ${done} من ${items.length} تمارين` : `${done} of ${items.length} exercises complete`}</span>
             <span>{Math.round((done / items.length) * 100)}%</span>
           </div>
           <Progress value={(done / items.length) * 100} />

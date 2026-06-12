@@ -46,6 +46,14 @@ await page.getByPlaceholder("••••••••").fill("password");
 await page.getByRole("button", { name: "Log in securely" }).click();
 await page.waitForURL("**/patient");
 
+await page.goto(`${baseURL}/register`, { waitUntil: "networkidle" });
+await page.getByRole("button", { name: "Switch language" }).click();
+await page.getByRole("button", { name: "طبيب" }).click();
+const registerText = await page.locator("form").innerText();
+if (registerText.includes("العمر")) errors.push("doctor registration incorrectly shows age field");
+if (!registerText.includes("التخصص") || !registerText.includes("رقم الترخيص الطبي")) errors.push("doctor registration fields are mislabeled in Arabic");
+await page.getByRole("button", { name: "Switch language" }).click();
+
 await page.goto(`${baseURL}/patient/exercises`, { waitUntil: "networkidle" });
 const completeButton = page.getByRole("button", { name: "Complete exercise" }).first();
 await completeButton.click();

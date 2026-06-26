@@ -37,9 +37,6 @@ jobs:
           VITE_BASE_PATH: /SalmaAYA/
           VITE_STATIC_DEMO: "true"
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

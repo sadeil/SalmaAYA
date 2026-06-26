@@ -1,0 +1,697 @@
+{
+  "progressData": [
+    {
+      "day": "Mon",
+      "score": 45
+    },
+    {
+      "day": "Tue",
+      "score": 62
+    },
+    {
+      "day": "Wed",
+      "score": 55
+    },
+    {
+      "day": "Thu",
+      "score": 78
+    },
+    {
+      "day": "Fri",
+      "score": 72
+    },
+    {
+      "day": "Sat",
+      "score": 88
+    },
+    {
+      "day": "Sun",
+      "score": 92
+    }
+  ],
+  "exercises": [
+    {
+      "id": 1,
+      "name": "Neck release",
+      "area": "Neck & shoulders",
+      "duration": "4 min",
+      "sets": 2,
+      "reps": 8,
+      "done": true,
+      "color": "bg-teal-100 text-teal-700"
+    },
+    {
+      "id": 2,
+      "name": "Shoulder rolls",
+      "area": "Upper back",
+      "duration": "3 min",
+      "sets": 2,
+      "reps": 10,
+      "done": true,
+      "color": "bg-blue-100 text-blue-700"
+    },
+    {
+      "id": 3,
+      "name": "Cat-cow stretch",
+      "area": "Spine mobility",
+      "duration": "6 min",
+      "sets": 3,
+      "reps": 8,
+      "done": false,
+      "color": "bg-violet-100 text-violet-700"
+    },
+    {
+      "id": 4,
+      "name": "Lower back mobility",
+      "area": "Lower back",
+      "duration": "7 min",
+      "sets": 2,
+      "reps": 12,
+      "done": false,
+      "color": "bg-amber-100 text-amber-700"
+    },
+    {
+      "id": 5,
+      "name": "Posture reset",
+      "area": "Full posture",
+      "duration": "5 min",
+      "sets": 3,
+      "reps": 10,
+      "done": false,
+      "color": "bg-rose-100 text-rose-700"
+    },
+    {
+      "id": 6,
+      "name": "Neck mobility",
+      "area": "Neck & shoulders",
+      "duration": "4 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-teal-100 text-teal-700"
+    },
+    {
+      "id": 7,
+      "name": "Shoulder raise",
+      "area": "Neck & shoulders",
+      "duration": "4 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-blue-100 text-blue-700"
+    },
+    {
+      "id": 8,
+      "name": "Posture reset",
+      "area": "Full posture",
+      "duration": "5 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-rose-100 text-rose-700"
+    },
+    {
+      "id": 9,
+      "name": "Neck mobility",
+      "area": "Neck & shoulders",
+      "duration": "4 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-teal-100 text-teal-700"
+    },
+    {
+      "id": 10,
+      "name": "Shoulder raise",
+      "area": "Neck & shoulders",
+      "duration": "4 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-blue-100 text-blue-700"
+    },
+    {
+      "id": 11,
+      "name": "Posture reset",
+      "area": "Full posture",
+      "duration": "5 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-rose-100 text-rose-700"
+    }
+  ],
+  "patients": [
+    {
+      "id": 1,
+      "name": "Maya Khalil",
+      "initials": "MK",
+      "problem": "Lower back pain",
+      "pain": 4,
+      "time": "25 min",
+      "level": 3,
+      "points": 82,
+      "commitment": 92,
+      "status": "Approved"
+    },
+    {
+      "id": 2,
+      "name": "Omar Saleh",
+      "initials": "OS",
+      "problem": "Neck stiffness",
+      "pain": 6,
+      "time": "20 min",
+      "level": 2,
+      "points": 54,
+      "commitment": 76,
+      "status": "Needs review"
+    },
+    {
+      "id": 3,
+      "name": "Lina Nasser",
+      "initials": "LN",
+      "problem": "Shoulder mobility",
+      "pain": 3,
+      "time": "30 min",
+      "level": 4,
+      "points": 118,
+      "commitment": 88,
+      "status": "Modified"
+    },
+    {
+      "id": 4,
+      "name": "Yousef Hamdan",
+      "initials": "YH",
+      "problem": "Posture correction",
+      "pain": 5,
+      "time": "15 min",
+      "level": 1,
+      "points": 24,
+      "commitment": 64,
+      "status": "Needs review"
+    }
+  ],
+  "messages": [
+    {
+      "from": "ai",
+      "text": "Hi Maya. I am your RemedyQuest assistant. What is bothering you today?"
+    },
+    {
+      "from": "user",
+      "text": "My lower back feels tight after sitting at work."
+    },
+    {
+      "from": "ai",
+      "text": "I can help shape a gentle mobility plan. How strong is the discomfort from 1 to 10?"
+    },
+    {
+      "from": "user",
+      "text": "Around 4, mostly by the end of the day."
+    },
+    {
+      "from": "ai",
+      "text": "Thanks. Based on your answers, I suggest a 25-minute low-impact mobility plan. A doctor will review it before it becomes active."
+    },
+    {
+      "from": "user",
+      "text": "my neck is stiff today"
+    },
+    {
+      "from": "ai",
+      "text": "What is the pain or discomfort level right now from 0 to 10?"
+    },
+    {
+      "from": "user",
+      "text": "3 out of 10 and I have 15 minutes"
+    },
+    {
+      "from": "ai",
+      "text": "Plan preview for neck, pain 3/10:\n1. Neck mobility: 1 set, 5 reps, 4 min\n2. Shoulder raise: 1 set, 5 reps, 4 min\n3. Posture reset: 1 set, 5 reps, 5 min\n\nReply \"approve\" to add this to your Exercises page, or \"change\" to adjust it.",
+      "plan": {
+        "title": "Neck rehab pathway",
+        "focus": "neck",
+        "painLevel": 3,
+        "dailyTimeMinutes": 15,
+        "safety": "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+        "exercises": [
+          {
+            "name": "Neck mobility",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-teal-100 text-teal-700"
+          },
+          {
+            "name": "Shoulder raise",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-blue-100 text-blue-700"
+          },
+          {
+            "name": "Posture reset",
+            "area": "Full posture",
+            "duration": "5 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-rose-100 text-rose-700"
+          }
+        ]
+      },
+      "needsConfirmation": true
+    },
+    {
+      "from": "user",
+      "text": "approve"
+    },
+    {
+      "from": "ai",
+      "text": "Approved. I added 3 exercises from \"Neck rehab pathway\" to your Exercises page. Start gently and stop if pain increases.",
+      "planApplied": true,
+      "exercises": [
+        {
+          "id": 6,
+          "name": "Neck mobility",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-teal-100 text-teal-700"
+        },
+        {
+          "id": 7,
+          "name": "Shoulder raise",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-blue-100 text-blue-700"
+        },
+        {
+          "id": 8,
+          "name": "Posture reset",
+          "area": "Full posture",
+          "duration": "5 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-rose-100 text-rose-700"
+        }
+      ]
+    },
+    {
+      "from": "user",
+      "text": "hi"
+    },
+    {
+      "from": "ai",
+      "text": "Plan preview for neck, pain 3/10:\n1. Neck mobility: 1 set, 5 reps, 4 min\n2. Shoulder raise: 1 set, 5 reps, 4 min\n3. Posture reset: 1 set, 5 reps, 5 min\n\nReply \"approve\" to add this to your Exercises page, or \"change\" to adjust it.",
+      "plan": {
+        "title": "Neck rehab pathway",
+        "focus": "neck",
+        "painLevel": 3,
+        "dailyTimeMinutes": 15,
+        "safety": "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+        "exercises": [
+          {
+            "name": "Neck mobility",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-teal-100 text-teal-700"
+          },
+          {
+            "name": "Shoulder raise",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-blue-100 text-blue-700"
+          },
+          {
+            "name": "Posture reset",
+            "area": "Full posture",
+            "duration": "5 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-rose-100 text-rose-700"
+          }
+        ]
+      },
+      "needsConfirmation": true
+    },
+    {
+      "from": "user",
+      "text": "approve"
+    },
+    {
+      "from": "ai",
+      "text": "Approved. I added 3 exercises from \"Neck rehab pathway\" to your Exercises page. Start gently and stop if pain increases.",
+      "planApplied": true,
+      "exercises": [
+        {
+          "id": 9,
+          "name": "Neck mobility",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-teal-100 text-teal-700"
+        },
+        {
+          "id": 10,
+          "name": "Shoulder raise",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-blue-100 text-blue-700"
+        },
+        {
+          "id": 11,
+          "name": "Posture reset",
+          "area": "Full posture",
+          "duration": "5 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-rose-100 text-rose-700"
+        }
+      ]
+    },
+    {
+      "from": "user",
+      "text": "hi"
+    },
+    {
+      "from": "ai",
+      "text": "Plan preview for neck, pain 3/10:\n1. Neck mobility: 1 set, 5 reps, 4 min\n2. Shoulder raise: 1 set, 5 reps, 4 min\n3. Posture reset: 1 set, 5 reps, 5 min\n\nReply \"approve\" to add this to your Exercises page, or \"change\" to adjust it.",
+      "plan": {
+        "title": "Neck rehab pathway",
+        "focus": "neck",
+        "painLevel": 3,
+        "dailyTimeMinutes": 15,
+        "safety": "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+        "exercises": [
+          {
+            "name": "Neck mobility",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-teal-100 text-teal-700"
+          },
+          {
+            "name": "Shoulder raise",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-blue-100 text-blue-700"
+          },
+          {
+            "name": "Posture reset",
+            "area": "Full posture",
+            "duration": "5 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-rose-100 text-rose-700"
+          }
+        ]
+      },
+      "needsConfirmation": true
+    },
+    {
+      "from": "user",
+      "text": "hi"
+    },
+    {
+      "from": "ai",
+      "text": "Here's a preview of your neck rehab plan:\n\n**Daily Duration**: 15 minutes  \n**Pain Level**: 3/10  \n**Safety Note**: Use slow, pain-free motion. Stop if you feel sharp, numb, or unusual pain.  \n\n**Exercises**:  \n1. **Neck Mobility**: 4 minutes, 1 set of 5 repetitions  \n2. **Shoulder Raise**: 4 minutes, 1 set of 5 repetitions  \n3. **Posture Reset**: 5 minutes, 1 set of 5 repetitions  \n\nPlease review the plan and let me know if you approve before I save it!",
+      "plan": {
+        "title": "Neck rehab pathway",
+        "focus": "neck",
+        "painLevel": 3,
+        "dailyTimeMinutes": 15,
+        "safety": "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+        "exercises": [
+          {
+            "name": "Neck mobility",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-teal-100 text-teal-700"
+          },
+          {
+            "name": "Shoulder raise",
+            "area": "Neck & shoulders",
+            "duration": "4 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-blue-100 text-blue-700"
+          },
+          {
+            "name": "Posture reset",
+            "area": "Full posture",
+            "duration": "5 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-rose-100 text-rose-700"
+          }
+        ]
+      },
+      "needsConfirmation": true
+    }
+  ],
+  "patientProfile": {
+    "id": "patient_maya",
+    "name": "Maya Khalil",
+    "initials": "MK",
+    "problem": "Lower back pain",
+    "painLevel": 4,
+    "dailyTimeMinutes": 25,
+    "level": 3,
+    "points": 82,
+    "commitmentPercent": 92,
+    "status": "Approved"
+  },
+  "chatCareState": {
+    "intake": {
+      "currentProblem": "neck",
+      "painLevel": 3,
+      "dailyTimeMinutes": 15
+    },
+    "draftPlan": {
+      "title": "Neck rehab pathway",
+      "focus": "neck",
+      "painLevel": 3,
+      "dailyTimeMinutes": 15,
+      "safety": "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+      "exercises": [
+        {
+          "name": "Neck mobility",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-teal-100 text-teal-700"
+        },
+        {
+          "name": "Shoulder raise",
+          "area": "Neck & shoulders",
+          "duration": "4 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-blue-100 text-blue-700"
+        },
+        {
+          "name": "Posture reset",
+          "area": "Full posture",
+          "duration": "5 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-rose-100 text-rose-700"
+        }
+      ]
+    }
+  },
+  "formCheckSessions": [
+    {
+      "id": 1,
+      "createdAt": "2026-06-24T10:27:29.832Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 30000,
+      "totalReps": 5,
+      "correctReps": 5,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {},
+      "startedAt": "2026-06-24T10:26:59.832Z",
+      "endedAt": "2026-06-24T10:27:29.832Z"
+    },
+    {
+      "id": 2,
+      "createdAt": "2026-06-24T11:20:53.810Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 31188.200000047684,
+      "totalReps": 5,
+      "correctReps": 2,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {},
+      "startedAt": "2026-06-24T11:20:22.607Z",
+      "endedAt": "2026-06-24T11:20:53.796Z"
+    },
+    {
+      "id": 3,
+      "createdAt": "2026-06-24T11:21:22.770Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 19727.300000071526,
+      "totalReps": 5,
+      "correctReps": 0,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 3
+      },
+      "startedAt": "2026-06-24T11:21:03.039Z",
+      "endedAt": "2026-06-24T11:21:22.767Z"
+    },
+    {
+      "id": 4,
+      "createdAt": "2026-06-24T11:21:59.049Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 27240.900000095367,
+      "totalReps": 5,
+      "correctReps": 1,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 4
+      },
+      "startedAt": "2026-06-24T11:21:31.809Z",
+      "endedAt": "2026-06-24T11:21:59.050Z"
+    },
+    {
+      "id": 5,
+      "createdAt": "2026-06-24T11:38:50.943Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 12707.699999928474,
+      "totalReps": 5,
+      "correctReps": 0,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 2
+      },
+      "startedAt": "2026-06-24T11:38:38.231Z",
+      "endedAt": "2026-06-24T11:38:50.939Z"
+    },
+    {
+      "id": 6,
+      "createdAt": "2026-06-24T11:48:46.206Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 13320.600000023842,
+      "totalReps": 5,
+      "correctReps": 1,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 3
+      },
+      "startedAt": "2026-06-24T11:48:32.881Z",
+      "endedAt": "2026-06-24T11:48:46.202Z"
+    },
+    {
+      "id": 7,
+      "createdAt": "2026-06-24T11:49:23.608Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 26110.5,
+      "totalReps": 0,
+      "correctReps": 0,
+      "targetReps": 5,
+      "completed": false,
+      "mistakes": {},
+      "startedAt": "2026-06-24T11:48:57.496Z",
+      "endedAt": "2026-06-24T11:49:23.607Z"
+    },
+    {
+      "id": 8,
+      "createdAt": "2026-06-24T11:49:49.401Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 10225.799999952316,
+      "totalReps": 5,
+      "correctReps": 0,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 3
+      },
+      "startedAt": "2026-06-24T11:49:39.172Z",
+      "endedAt": "2026-06-24T11:49:49.398Z"
+    },
+    {
+      "id": 9,
+      "createdAt": "2026-06-24T11:53:33.288Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 11088.5,
+      "totalReps": 5,
+      "correctReps": 3,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 1
+      },
+      "startedAt": "2026-06-24T11:53:22.196Z",
+      "endedAt": "2026-06-24T11:53:33.285Z"
+    },
+    {
+      "id": 10,
+      "createdAt": "2026-06-24T12:26:14.051Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 17801.5,
+      "totalReps": 5,
+      "correctReps": 3,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 1
+      },
+      "startedAt": "2026-06-24T12:25:56.243Z",
+      "endedAt": "2026-06-24T12:26:14.045Z"
+    }
+  ]
+}

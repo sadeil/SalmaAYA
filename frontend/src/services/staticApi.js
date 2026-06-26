@@ -1,4 +1,4 @@
-import {
+﻿import {
   exercises as seedExercises,
   messages as seedMessages,
   patients as seedPatients,
@@ -13,8 +13,8 @@ const state = {
   patients: clone(seedPatients),
   sessions: [],
   patientProfile: {
-    id: "patient_maya",
-    name: "Maya Khalil",
+    id: "patient_salma",
+    name: "Salma",
     problem: "Lower back pain",
     painLevel: 4,
     dailyTimeMinutes: 25,
@@ -52,14 +52,14 @@ function parseBody(options) {
 }
 
 const intakeQuestions = {
-  currentProblem: "What is the main problem today: back, neck, shoulder, knee, posture, stiffness, or something else?",
-  location: "Where exactly do you feel it? For example: lower back, right shoulder, left knee, or both sides.",
-  painLevel: "What is the pain or discomfort level right now from 0 to 10?",
-  symptoms: "Do you have numbness, tingling, weakness, swelling, fever, or sharp pain? If none, say none.",
-  duration: "How long has this been going on: today, a few days, weeks, or longer?",
-  dailyTimeMinutes: "How many minutes can you comfortably exercise today?",
-  goal: "What is your main goal: reduce pain, improve mobility, stretch, strengthen, or improve posture?",
-  difficulty: "What level should I start with: easy, medium, or challenging?",
+  currentProblem: "\u0645\u0631\u062D\u0628\u0627 \u0633\u0644\u0645\u0649. \u0633\u0623\u0637\u0631\u062D \u0639\u0644\u064A\u0643 \u0623\u0633\u0626\u0644\u0629 \u062B\u0645 \u0623\u062C\u0647\u0632 \u062E\u0637\u0629 \u062A\u0645\u0627\u0631\u064A\u0646.\n\n\u0645\u0627 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0627\u0644\u064A\u0648\u0645\u061F \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629\u061F",
+  location: "\u0623\u064A\u0646 \u062A\u0634\u0639\u0631\u064A\u0646 \u0628\u0627\u0644\u0623\u0644\u0645 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F\u061F",
+  painLevel: "\u0645\u0627 \u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645 \u0645\u0646 0 \u0625\u0644\u0649 10\u061F",
+  symptoms: "\u0647\u0644 \u064A\u0648\u062C\u062F \u062A\u0646\u0645\u064A\u0644\u060C \u0648\u062E\u0632\u060C \u0636\u0639\u0641\u060C \u062A\u0648\u0631\u0645\u060C \u0623\u0648 \u0623\u0644\u0645 \u062D\u0627\u062F\u061F \u0625\u0630\u0627 \u0644\u0627 \u064A\u0648\u062C\u062F\u060C \u0627\u0643\u062A\u0628\u064A: \u0644\u0627 \u064A\u0648\u062C\u062F.",
+  duration: "\u0645\u0646\u0630 \u0645\u062A\u0649 \u0628\u062F\u0623\u062A \u0627\u0644\u0645\u0634\u0643\u0644\u0629\u061F",
+  dailyTimeMinutes: "\u0643\u0645 \u062F\u0642\u064A\u0642\u0629 \u062A\u0633\u062A\u0637\u064A\u0639\u064A\u0646 \u0627\u0644\u062A\u0645\u0631\u0646 \u0627\u0644\u064A\u0648\u0645\u061F",
+  goal: "\u0645\u0627 \u0647\u062F\u0641\u0643\u061F \u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645 \u0623\u0648 \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629\u061F",
+  difficulty: "\u0645\u0627 \u0627\u0644\u0645\u0633\u062A\u0648\u0649 \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u061F \u0633\u0647\u0644\u060C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0645\u062A\u0642\u062F\u0645\u061F",
 };
 
 const intakeOrder = Object.keys(intakeQuestions);
@@ -81,7 +81,7 @@ function updateIntakeFromAnswer(field, text) {
   if (field === "duration") intake.duration = text;
   if (field === "dailyTimeMinutes") intake.dailyTimeMinutes = minutes ?? text;
   if (field === "goal") intake.goal = extractGoal(normalized) || text;
-  if (field === "difficulty") intake.difficulty = extractDifficulty(normalized) || "easy";
+  if (field === "difficulty") intake.difficulty = extractDifficulty(normalized) || "\u0633\u0647\u0644";
 
   if (pain != null) intake.painLevel = pain;
   if (minutes != null) intake.dailyTimeMinutes = minutes;
@@ -91,28 +91,28 @@ function updateIntakeFromAnswer(field, text) {
 function createDraftPlan() {
   const intake = state.chatCareState.intake;
   const focus = String(intake.currentProblem || "back");
-  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "challenging";
+  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "\u0645\u062A\u0642\u062F\u0645";
   const dailyTimeMinutes = Number(intake.dailyTimeMinutes) || 20;
   const exercises = focus.includes("neck")
     ? [
-        draftExercise("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
-        draftExercise("Shoulder raise", "Neck & shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
-        draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+        draftExercise("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+        draftExercise("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u062A\u0641", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-blue-100 text-blue-700"),
+        draftExercise("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
       ]
     : focus.includes("shoulder")
       ? [
-          draftExercise("Shoulder raise", "Shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
-          draftExercise("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
-          draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+          draftExercise("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u062A\u0641", "\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-blue-100 text-blue-700"),
+          draftExercise("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+          draftExercise("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
         ]
     : [
-        draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
-        draftExercise("Cat-cow stretch", "Spine mobility", 6, easy ? 1 : 2, 5, "bg-violet-100 text-violet-700"),
-        draftExercise("Lower back mobility", "Lower back", 6, easy ? 1 : 2, 5, "bg-amber-100 text-amber-700"),
+        draftExercise("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
+        draftExercise("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0638\u0647\u0631", "\u0645\u0631\u0648\u0646\u0629 \u0627\u0644\u0638\u0647\u0631", 6, easy ? 1 : 2, 5, "bg-violet-100 text-violet-700"),
+        draftExercise("\u062A\u062D\u0631\u064A\u0643 \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631", "\u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631", 6, easy ? 1 : 2, 5, "bg-amber-100 text-amber-700"),
       ];
 
   return {
-    title: `${capitalize(focus)} ${intake.goal || "mobility"} plan`,
+    title: `${arabicFocus(focus)} - ${intake.goal || "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629"}`,
     focus,
     location: intake.location,
     painLevel: Number(intake.painLevel) || 0,
@@ -120,8 +120,8 @@ function createDraftPlan() {
     goal: intake.goal,
     difficulty: intake.difficulty,
     safety: hasRedFlags(intake.symptoms)
-      ? "Because you mentioned possible warning symptoms, keep this very gentle and contact a clinician before pushing effort."
-      : "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+      ? "\u0627\u062C\u0639\u0644\u064A \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \u062E\u0641\u064A\u0641\u0629 \u062C\u062F\u0627 \u0648\u062A\u0648\u0627\u0635\u0644\u064A \u0645\u0639 \u0637\u0628\u064A\u0628 \u0625\u0630\u0627 \u0632\u0627\u062F\u062A \u0627\u0644\u0623\u0639\u0631\u0627\u0636."
+      : "\u062A\u062D\u0631\u0643\u064A \u0628\u0628\u0637\u0621 \u0648\u062A\u0648\u0642\u0641\u064A \u0625\u0630\u0627 \u0632\u0627\u062F \u0627\u0644\u0623\u0644\u0645.",
     exercises,
   };
 }
@@ -140,18 +140,18 @@ function draftExercise(name, area, minutes, sets, reps, color) {
 
 function planPreviewText(plan) {
   const lines = plan.exercises
-    .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} set, ${exercise.reps} reps, ${exercise.duration}`)
+    .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} \u062C\u0648\u0644\u0629\u060C ${exercise.reps} \u062A\u0643\u0631\u0627\u0631\u0627\u062A\u060C ${exercise.duration}`)
     .join("\n");
-  return `Plan preview for ${plan.location || plan.focus}, pain ${plan.painLevel}/10, goal: ${plan.goal || "mobility"}:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
+  return `\u0647\u0630\u0647 \u062E\u0637\u0629 \u0645\u0642\u062A\u0631\u062D\u0629 \u0644\u0640 ${plan.location || arabicFocus(plan.focus)}. \u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645 ${plan.painLevel}/10.\n${lines}\n\n\u0627\u0643\u062A\u0628\u064A "\u0645\u0648\u0627\u0641\u0642\u0629" \u0644\u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u062E\u0637\u0629 \u0623\u0648 "\u062A\u063A\u064A\u064A\u0631" \u0644\u062A\u0639\u062F\u064A\u0644\u0647\u0627.`;
 }
 
 function extractProblem(text) {
-  if (text.includes("neck")) return "neck";
-  if (text.includes("shoulder")) return "shoulder";
-  if (text.includes("lower back")) return "lower back";
-  if (text.includes("back")) return "back";
-  if (text.includes("knee")) return "knee";
-  if (text.includes("posture")) return "posture";
+  if (text.includes("neck") || text.includes("\u0631\u0642\u0628\u0629")) return "neck";
+  if (text.includes("shoulder") || text.includes("\u0643\u062A\u0641")) return "shoulder";
+  if (text.includes("lower back") || text.includes("\u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631") || text.includes("\u0627\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631")) return "lower back";
+  if (text.includes("back") || text.includes("\u0638\u0647\u0631")) return "back";
+  if (text.includes("knee") || text.includes("\u0631\u0643\u0628\u0629")) return "knee";
+  if (text.includes("posture") || text.includes("\u0648\u0636\u0639\u064A\u0629")) return "posture";
   return null;
 }
 
@@ -166,28 +166,33 @@ function extractDailyMinutes(text) {
 }
 
 function extractGoal(text) {
-  if (text.includes("pain")) return "reduce pain";
-  if (text.includes("mobil")) return "improve mobility";
-  if (text.includes("stretch")) return "stretch";
-  if (text.includes("strength")) return "strengthen";
-  if (text.includes("posture")) return "improve posture";
+  if (text.includes("pain") || text.includes("\u0623\u0644\u0645")) return "\u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645";
+  if (text.includes("mobil") || text.includes("\u062D\u0631\u0643\u0629")) return "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629";
+  if (text.includes("stretch") || text.includes("\u062A\u0645\u062F\u062F")) return "\u062A\u0645\u062F\u062F";
+  if (text.includes("strength") || text.includes("\u062A\u0642\u0648\u064A\u0629")) return "\u062A\u0642\u0648\u064A\u0629";
+  if (text.includes("posture") || text.includes("\u0648\u0636\u0639\u064A\u0629")) return "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u0648\u0636\u0639\u064A\u0629";
   return null;
 }
 
 function extractDifficulty(text) {
-  if (text.includes("easy") || text.includes("gentle")) return "easy";
-  if (text.includes("medium") || text.includes("moderate")) return "medium";
-  if (text.includes("challenging") || text.includes("hard")) return "challenging";
+  if (text.includes("easy") || text.includes("gentle") || text.includes("\u0633\u0647\u0644")) return "\u0633\u0647\u0644";
+  if (text.includes("medium") || text.includes("moderate") || text.includes("\u0645\u062A\u0648\u0633\u0637")) return "\u0645\u062A\u0648\u0633\u0637";
+  if (text.includes("challenging") || text.includes("hard") || text.includes("\u0645\u062A\u0642\u062F\u0645")) return "\u0645\u062A\u0642\u062F\u0645";
   return null;
 }
 
 function hasRedFlags(text) {
-  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""));
+  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""))
+    || /(\u062A\u0646\u0645\u064A\u0644|\u0648\u062E\u0632|\u0636\u0639\u0641|\u062A\u0648\u0631\u0645|\u062D\u0627\u062F)/.test(String(text || ""));
 }
 
-function capitalize(value) {
-  const text = String(value || "Rehab");
-  return text[0].toUpperCase() + text.slice(1);
+function arabicFocus(value) {
+  const focus = String(value || "");
+  if (focus.includes("neck")) return "\u0627\u0644\u0631\u0642\u0628\u0629";
+  if (focus.includes("shoulder")) return "\u0627\u0644\u0643\u062A\u0641";
+  if (focus.includes("knee")) return "\u0627\u0644\u0631\u0643\u0628\u0629";
+  if (focus.includes("posture")) return "\u0627\u0644\u0648\u0636\u0639\u064A\u0629";
+  return "\u0627\u0644\u0638\u0647\u0631";
 }
 
 function adminDatabase() {
@@ -223,8 +228,8 @@ export async function staticRequest(path, options = {}) {
   if (method === "POST" && path === "/auth/login") {
     const role = body.role === "doctor" ? "doctor" : "patient";
     const user = {
-      id: role === "doctor" ? "doctor_adam" : "patient_maya",
-      name: role === "doctor" ? "Dr. Adam Noor" : "Maya Khalil",
+      id: role === "doctor" ? "doctor_aya" : "patient_salma",
+      name: role === "doctor" ? "Dr. Aya" : "Salma",
       role,
     };
     return response({ token: tokenFor(user), user });
@@ -255,11 +260,11 @@ export async function staticRequest(path, options = {}) {
     state.messages.push(outgoing);
 
     let assistant;
-    if (/\b(start over|restart|new plan)\b/i.test(outgoing.text)) {
+    if (/\b(start over|restart|new plan)\b/i.test(outgoing.text) || /(\u0645\u0646 \u062C\u062F\u064A\u062F|\u062E\u0637\u0629 \u062C\u062F\u064A\u062F\u0629)/.test(outgoing.text)) {
       state.chatCareState.intake = Object.fromEntries(intakeOrder.map((field) => [field, null]));
       state.chatCareState.draftPlan = null;
       assistant = { from: "ai", text: intakeQuestions.currentProblem };
-    } else if (state.chatCareState.draftPlan && /\b(approve|yes|ok|add|confirm|save)\b/i.test(outgoing.text)) {
+    } else if (state.chatCareState.draftPlan && (/\b(approve|yes|ok|add|confirm|save)\b/i.test(outgoing.text) || /(\u0645\u0648\u0627\u0641\u0642\u0629|\u0646\u0639\u0645|\u062A\u0645\u0627\u0645|\u0623\u0636\u0641|\u0627\u0636\u0641)/.test(outgoing.text))) {
       const added = state.chatCareState.draftPlan.exercises.map((exercise) => ({
         id: state.exercises.length + 1,
         ...exercise,
@@ -267,14 +272,14 @@ export async function staticRequest(path, options = {}) {
       state.exercises.push(...added);
       assistant = {
         from: "ai",
-        text: `Approved. I added ${added.length} exercises from "${state.chatCareState.draftPlan.title}" to your Exercises page. Start gently and stop if pain increases.`,
+        text: `\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629. \u0623\u0636\u0641\u062A ${added.length} \u062A\u0645\u0627\u0631\u064A\u0646 \u0625\u0644\u0649 \u0635\u0641\u062D\u0629 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646.`,
         planApplied: true,
         exercises: added,
       };
       state.chatCareState.draftPlan = null;
-    } else if (state.chatCareState.draftPlan && /\b(change|edit|different|no)\b/i.test(outgoing.text)) {
+    } else if (state.chatCareState.draftPlan && (/\b(change|edit|different|no)\b/i.test(outgoing.text) || /(\u062A\u063A\u064A\u064A\u0631|\u062A\u0639\u062F\u064A\u0644|\u0644\u0627)/.test(outgoing.text))) {
       state.chatCareState.draftPlan = null;
-      assistant = { from: "ai", text: "No problem. Tell me what you want to change, or type \"start over\" to begin the intake again." };
+      assistant = { from: "ai", text: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0629. \u0627\u0643\u062A\u0628\u064A \u0645\u0627 \u0627\u0644\u0630\u064A \u062A\u0631\u064A\u062F\u064A\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u060C \u0623\u0648 \u0627\u0643\u062A\u0628\u064A \"\u0645\u0646 \u062C\u062F\u064A\u062F\"." };
     } else {
       const expectedField = nextMissingField();
       updateIntakeFromAnswer(expectedField, outgoing.text);

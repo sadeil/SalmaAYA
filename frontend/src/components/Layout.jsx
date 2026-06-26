@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -30,7 +30,7 @@ const adminLinks = [
 ];
 
 // =====================================================================
-// Public navigation — gains a hairline that becomes more opaque as the
+// Public navigation â€” gains a hairline that becomes more opaque as the
 // user scrolls (depth cue) and an animated brand glow.
 // =====================================================================
 export function PublicNav() {
@@ -84,7 +84,7 @@ export function PublicNav() {
 }
 
 // =====================================================================
-// Sidebar nav item — owns the sliding active rail via framer-motion's
+// Sidebar nav item â€” owns the sliding active rail via framer-motion's
 // layoutId. The rail morphs from one item to another instead of just
 // switching backgrounds, which is the single biggest "this feels
 // expensive" detail in a dashboard.
@@ -121,10 +121,10 @@ export function DashboardLayout({ role = "patient" }) {
   const location = useLocation();
   const links = role === "doctor" ? doctorLinks : role === "admin" ? adminLinks : patientLinks;
   const roleData = role === "doctor"
-    ? ["Dr. Adam Noor", "Physiotherapist", Stethoscope]
+    ? ["Dr. Aya", "Physiotherapist", Stethoscope]
     : role === "admin"
       ? ["Salma Admin", "Platform manager", ShieldCheck]
-      : ["Maya Khalil", "Patient · Level 3", UserRound];
+      : ["Salma", "Patient آ· Level 3", UserRound];
   const RoleIcon = roleData[2];
 
   // Close mobile sidebar and avatar menu on route change.
@@ -134,7 +134,7 @@ export function DashboardLayout({ role = "patient" }) {
   }, [location.pathname]);
 
   // Click-outside for the avatar menu. The ref wraps the trigger + dropdown,
-  // so any pointerdown outside that subtree closes the menu — without any
+  // so any pointerdown outside that subtree closes the menu â€” without any
   // overlay that would block clicks on the dropdown's own links.
   const menuRef = useRef(null);
   useEffect(() => {
@@ -321,7 +321,7 @@ export function Footer() {
         <p className="max-w-md text-sm leading-6 text-white/55">
           {t("General therapeutic exercise guidance. RemedyQuest does not replace professional medical advice.")}
         </p>
-        <p className="text-xs text-white/40">© 2026 RemedyQuest</p>
+        <p className="text-xs text-white/40">آ© 2026 RemedyQuest</p>
       </div>
     </footer>
   );

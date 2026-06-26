@@ -144,8 +144,8 @@
   "patients": [
     {
       "id": 1,
-      "name": "Maya Khalil",
-      "initials": "MK",
+      "name": "Salma",
+      "initials": "S",
       "problem": "Lower back pain",
       "pain": 4,
       "time": "25 min",
@@ -194,7 +194,7 @@
   "messages": [
     {
       "from": "ai",
-      "text": "Hi Maya. I am your RemedyQuest assistant. What is bothering you today?"
+      "text": "مرحبا سلمى. ما المشكلة اليوم؟"
     },
     {
       "from": "user",
@@ -484,9 +484,9 @@
     }
   ],
   "patientProfile": {
-    "id": "patient_maya",
-    "name": "Maya Khalil",
-    "initials": "MK",
+    "id": "patient_salma",
+    "name": "Salma",
+    "initials": "S",
     "problem": "Lower back pain",
     "painLevel": 4,
     "dailyTimeMinutes": 25,

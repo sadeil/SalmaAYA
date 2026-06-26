@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -52,7 +52,7 @@ export function DoctorDashboard() {
     <>
       <PageHeader
         eyebrow="Clinical overview"
-        title="Good morning, Dr. Adam"
+        title="Good morning, Dr. Aya"
         description="Review suggested plans, respond to patients, and keep recovery on track."
         action={<Link to="/doctor/patients" className="btn-primary">Review patient plans <ArrowRight size={16} /></Link>}
       />
@@ -222,8 +222,8 @@ export function PatientProfile() {
     <>
       <PageHeader
         eyebrow="Patient profile"
-        title="Maya Khalil"
-        description="Lower back pain · 25 minutes daily · Joined May 2026"
+        title="Salma"
+        description="Lower back pain آ· 25 minutes daily آ· Joined May 2026"
         action={<div className="flex gap-2"><Link to="/doctor/messages" className="btn-soft"><MessageCircle size={16} /> Send note</Link><button disabled={saving || approved} onClick={approvePlan} className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"><Check size={16} /> {approved ? "Plan approved" : saving ? "Approving..." : "Approve plan"}</button></div>}
       />
       {message && <p className="mb-5 rounded-2xl bg-teal-50 px-4 py-3 text-sm font-bold text-teal-700">{message}</p>}
@@ -232,12 +232,12 @@ export function PatientProfile() {
           <div className="card">
             <div className="flex items-center gap-4">
               <span className="relative grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-teal-200 to-teal-100 text-lg font-extrabold text-teal-700 shadow-inner">
-                MK
+                S
                 <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white bg-emerald-400" />
               </span>
               <div className="flex-1">
-                <h3 className="text-xl font-extrabold">Maya Khalil</h3>
-                <p className="text-sm text-slate-500">Age 28 · Pain level 4/10</p>
+                <h3 className="text-xl font-extrabold">Salma</h3>
+                <p className="text-sm text-slate-500">Age 28 آ· Pain level 4/10</p>
               </div>
               <Status>{approved ? "Approved" : "Needs review"}</Status>
             </div>
@@ -264,7 +264,7 @@ export function PatientProfile() {
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-500">Low-impact mobility focused on reducing tension related to prolonged sitting. Avoid loaded spinal flexion.</p>
             <div className="mt-6 space-y-3">
-              {["Cat-cow stretch · 3 x 8", "Lower back mobility · 2 x 12", "Hamstring stretch · 2 x 30 sec", "Posture reset · 3 x 10"].map((item, index) => (
+              {["Cat-cow stretch آ· 3 x 8", "Lower back mobility آ· 2 x 12", "Hamstring stretch آ· 2 x 30 sec", "Posture reset آ· 3 x 10"].map((item, index) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl border p-3">
                   <span className="grid h-8 w-8 place-items-center rounded-xl bg-teal-50 text-xs font-extrabold text-teal-700">{index + 1}</span>
                   <p className="text-sm font-bold">{item}</p>
@@ -343,7 +343,7 @@ export function AdminDashboard() {
             </thead>
             <tbody>
               {[
-                ["Maya Khalil", "Level 2", "5 ILS"],
+                ["Salma", "Level 2", "5 ILS"],
                 ["Omar Saleh", "Level 1", "5 ILS"],
                 ["Lina Nasser", "Level 3", "10 ILS"],
               ].map(([patient, milestone, amount], index) => (

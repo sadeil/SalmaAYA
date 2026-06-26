@@ -1,4 +1,4 @@
-import {
+﻿import {
   chatCareState,
   exercises,
   messages,
@@ -52,14 +52,14 @@ export async function createMessage(request, response) {
 }
 
 const intakeQuestions = {
-  currentProblem: "What is the main problem today: back, neck, shoulder, knee, posture, stiffness, or something else?",
-  location: "Where exactly do you feel it? For example: lower back, right shoulder, left knee, or both sides.",
-  painLevel: "What is the pain or discomfort level right now from 0 to 10?",
-  symptoms: "Do you have numbness, tingling, weakness, swelling, fever, or sharp pain? If none, say none.",
-  duration: "How long has this been going on: today, a few days, weeks, or longer?",
-  dailyTimeMinutes: "How many minutes can you comfortably exercise today?",
-  goal: "What is your main goal: reduce pain, improve mobility, stretch, strengthen, or improve posture?",
-  difficulty: "What level should I start with: easy, medium, or challenging?",
+  currentProblem: "\u0645\u0631\u062D\u0628\u0627 \u0633\u0644\u0645\u0649. \u0633\u0623\u0637\u0631\u062D \u0639\u0644\u064A\u0643 \u0623\u0633\u0626\u0644\u0629 \u062B\u0645 \u0623\u062C\u0647\u0632 \u062E\u0637\u0629 \u062A\u0645\u0627\u0631\u064A\u0646.\n\n\u0645\u0627 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0627\u0644\u064A\u0648\u0645\u061F \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629\u061F",
+  location: "\u0623\u064A\u0646 \u062A\u0634\u0639\u0631\u064A\u0646 \u0628\u0627\u0644\u0623\u0644\u0645 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F\u061F",
+  painLevel: "\u0645\u0627 \u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645 \u0645\u0646 0 \u0625\u0644\u0649 10\u061F",
+  symptoms: "\u0647\u0644 \u064A\u0648\u062C\u062F \u062A\u0646\u0645\u064A\u0644\u060C \u0648\u062E\u0632\u060C \u0636\u0639\u0641\u060C \u062A\u0648\u0631\u0645\u060C \u0623\u0648 \u0623\u0644\u0645 \u062D\u0627\u062F\u061F \u0625\u0630\u0627 \u0644\u0627 \u064A\u0648\u062C\u062F\u060C \u0627\u0643\u062A\u0628\u064A: \u0644\u0627 \u064A\u0648\u062C\u062F.",
+  duration: "\u0645\u0646\u0630 \u0645\u062A\u0649 \u0628\u062F\u0623\u062A \u0627\u0644\u0645\u0634\u0643\u0644\u0629\u061F",
+  dailyTimeMinutes: "\u0643\u0645 \u062F\u0642\u064A\u0642\u0629 \u062A\u0633\u062A\u0637\u064A\u0639\u064A\u0646 \u0627\u0644\u062A\u0645\u0631\u0646 \u0627\u0644\u064A\u0648\u0645\u061F",
+  goal: "\u0645\u0627 \u0647\u062F\u0641\u0643\u061F \u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645 \u0623\u0648 \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629\u061F",
+  difficulty: "\u0645\u0627 \u0627\u0644\u0645\u0633\u062A\u0648\u0649 \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u061F \u0633\u0647\u0644\u060C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0645\u062A\u0642\u062F\u0645\u061F",
 };
 
 const intakeOrder = Object.keys(intakeQuestions);
@@ -67,7 +67,7 @@ const intakeOrder = Object.keys(intakeQuestions);
 async function buildAssistantResponse(text) {
   const normalized = normalizeText(text);
 
-  if (/\b(start over|restart|new plan)\b/i.test(normalized)) {
+  if (/\b(start over|restart|new plan)\b/i.test(normalized) || /(\u0645\u0646 \u062C\u062F\u064A\u062F|\u062E\u0637\u0629 \u062C\u062F\u064A\u062F\u0629)/.test(text)) {
     resetIntake();
     chatCareState.draftPlan = null;
     return { from: "ai", text: intakeQuestions.currentProblem };
@@ -80,7 +80,7 @@ async function buildAssistantResponse(text) {
     saveAppStore();
     return {
       from: "ai",
-      text: `Approved. I added ${added.length} exercises from "${planTitle}" to your Exercises page. Start gently and stop if pain increases.`,
+      text: `\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629. \u0623\u0636\u0641\u062A ${added.length} \u062A\u0645\u0627\u0631\u064A\u0646 \u0625\u0644\u0649 \u0635\u0641\u062D\u0629 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646.`,
       planApplied: true,
       exercises: added,
     };
@@ -90,7 +90,7 @@ async function buildAssistantResponse(text) {
     chatCareState.draftPlan = null;
     return {
       from: "ai",
-      text: "No problem. I did not add anything. Tell me what you want changed, or type \"start over\" to begin the intake again.",
+      text: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0629. \u0627\u0643\u062A\u0628\u064A \u0645\u0627 \u0627\u0644\u0630\u064A \u062A\u0631\u064A\u062F\u064A\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u060C \u0623\u0648 \u0627\u0643\u062A\u0628\u064A \"\u0645\u0646 \u062C\u062F\u064A\u062F\".",
     };
   }
 
@@ -135,7 +135,7 @@ function updateIntakeFromAnswer(field, text) {
   if (field === "duration") intake.duration = text.slice(0, 80);
   if (field === "dailyTimeMinutes") intake.dailyTimeMinutes = minutes ?? text.slice(0, 20);
   if (field === "goal") intake.goal = extractGoal(lower) || text.slice(0, 80);
-  if (field === "difficulty") intake.difficulty = extractDifficulty(lower) || "easy";
+  if (field === "difficulty") intake.difficulty = extractDifficulty(lower) || "\u0633\u0647\u0644";
 
   if (pain != null) intake.painLevel = pain;
   if (minutes != null) intake.dailyTimeMinutes = minutes;
@@ -145,11 +145,11 @@ function updateIntakeFromAnswer(field, text) {
 function createDraftPlan() {
   const intake = chatCareState.intake;
   const focus = intake.currentProblem;
-  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "challenging";
+  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "\u0645\u062A\u0642\u062F\u0645";
   const dailyTime = Number(intake.dailyTimeMinutes) || patientProfile.dailyTimeMinutes;
   const plan = pickExercises(focus, easy);
   return {
-    title: `${capitalize(focus)} ${intake.goal || "mobility"} plan`,
+    title: `${arabicFocus(focus)} - ${intake.goal || "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629"}`,
     focus,
     location: intake.location,
     painLevel: Number(intake.painLevel) || 0,
@@ -157,8 +157,8 @@ function createDraftPlan() {
     goal: intake.goal,
     difficulty: intake.difficulty,
     safety: hasRedFlags(intake.symptoms)
-      ? "Because you mentioned possible warning symptoms, keep this very gentle and contact a clinician before pushing effort."
-      : "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+      ? "\u0627\u062C\u0639\u0644\u064A \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646 \u062E\u0641\u064A\u0641\u0629 \u062C\u062F\u0627 \u0648\u062A\u0648\u0627\u0635\u0644\u064A \u0645\u0639 \u0637\u0628\u064A\u0628 \u0625\u0630\u0627 \u0632\u0627\u062F\u062A \u0627\u0644\u0623\u0639\u0631\u0627\u0636."
+      : "\u062A\u062D\u0631\u0643\u064A \u0628\u0628\u0637\u0621 \u0648\u062A\u0648\u0642\u0641\u064A \u0625\u0630\u0627 \u0632\u0627\u062F \u0627\u0644\u0623\u0644\u0645.",
     exercises: plan,
   };
 }
@@ -166,29 +166,29 @@ function createDraftPlan() {
 function pickExercises(focus, easy) {
   if (focus.includes("neck") || focus.includes("رقبة")) {
     return [
-      exerciseDraft("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
-      exerciseDraft("Shoulder raise", "Neck & shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
-      exerciseDraft("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u062A\u0641", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-blue-100 text-blue-700"),
+      exerciseDraft("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
     ];
   }
   if (focus.includes("shoulder") || focus.includes("كتف") || focus.includes("اكتاف")) {
     return [
-      exerciseDraft("Shoulder raise", "Shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
-      exerciseDraft("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
-      exerciseDraft("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u062A\u0641", "\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-blue-100 text-blue-700"),
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+      exerciseDraft("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
     ];
   }
   if (focus.includes("back") || focus.includes("ظهر")) {
     return [
-      exerciseDraft("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
-      exerciseDraft("Cat-cow stretch", "Spine mobility", 6, easy ? 1 : 2, 5, "bg-violet-100 text-violet-700"),
-      exerciseDraft("Lower back mobility", "Lower back", 6, easy ? 1 : 2, 5, "bg-amber-100 text-amber-700"),
+      exerciseDraft("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0638\u0647\u0631", "\u0645\u0631\u0648\u0646\u0629 \u0627\u0644\u0638\u0647\u0631", 6, easy ? 1 : 2, 5, "bg-violet-100 text-violet-700"),
+      exerciseDraft("\u062A\u062D\u0631\u064A\u0643 \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631", "\u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631", 6, easy ? 1 : 2, 5, "bg-amber-100 text-amber-700"),
     ];
   }
   return [
-    exerciseDraft("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
-    exerciseDraft("Shoulder raise", "Shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
-    exerciseDraft("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+    exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+    exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0643\u062A\u0641", "\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-blue-100 text-blue-700"),
+    exerciseDraft("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
   ];
 }
 
@@ -216,9 +216,9 @@ function addDraftExercises(draft) {
 
 function planPreviewText(plan) {
   const lines = plan.exercises
-    .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} set, ${exercise.reps} reps, ${exercise.duration}`)
+    .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} \u062C\u0648\u0644\u0629\u060C ${exercise.reps} \u062A\u0643\u0631\u0627\u0631\u0627\u062A\u060C ${exercise.duration}`)
     .join("\n");
-  return `Plan preview for ${plan.location || plan.focus}, pain ${plan.painLevel}/10, goal: ${plan.goal || "mobility"}:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
+  return `\u0647\u0630\u0647 \u062E\u0637\u0629 \u0645\u0642\u062A\u0631\u062D\u0629 \u0644\u0640 ${plan.location || arabicFocus(plan.focus)}. \u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645 ${plan.painLevel}/10.\n${lines}\n\n\u0627\u0643\u062A\u0628\u064A "\u0645\u0648\u0627\u0641\u0642\u0629" \u0644\u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u062E\u0637\u0629 \u0623\u0648 "\u062A\u063A\u064A\u064A\u0631" \u0644\u062A\u0639\u062F\u064A\u0644\u0647\u0627.`;
 }
 
 function aiProviderStatus() {
@@ -248,7 +248,7 @@ async function optionalOpenRouterSummary(plan) {
         messages: [
           {
             role: "system",
-            content: "Write a concise patient-facing rehab plan preview for the RemedyQuest chatbot. Do not diagnose. Mention the exact exercises provided. Ask the user to approve before saving. Keep it under 110 words.",
+            content: "Write the response in Arabic for Salma. Do not diagnose. Mention the exact exercises provided. Ask her to type موافقة before saving. Keep it under 110 words.",
           },
           {
             role: "user",
@@ -312,8 +312,13 @@ function hasRedFlags(text) {
   return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""));
 }
 
-function capitalize(value) {
-  return value ? value[0].toUpperCase() + value.slice(1) : "Rehab";
+function arabicFocus(value) {
+  const focus = String(value || "");
+  if (focus.includes("neck")) return "\u0627\u0644\u0631\u0642\u0628\u0629";
+  if (focus.includes("shoulder")) return "\u0627\u0644\u0643\u062A\u0641";
+  if (focus.includes("knee")) return "\u0627\u0644\u0631\u0643\u0628\u0629";
+  if (focus.includes("posture")) return "\u0627\u0644\u0648\u0636\u0639\u064A\u0629";
+  return "\u0627\u0644\u0638\u0647\u0631";
 }
 
 function normalizeText(text) {

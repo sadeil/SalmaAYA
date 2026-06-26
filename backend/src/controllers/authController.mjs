@@ -1,4 +1,4 @@
-import { readJson, sendJson } from "../utils/http.mjs";
+﻿import { readJson, sendJson } from "../utils/http.mjs";
 import { tokenFor } from "../utils/tokens.mjs";
 
 export async function login(request, response) {
@@ -9,8 +9,8 @@ export async function login(request, response) {
 
   const role = body.role === "doctor" ? "doctor" : "patient";
   const user = {
-    id: role === "doctor" ? "doctor_adam" : "patient_maya",
-    name: role === "doctor" ? "Dr. Adam Noor" : "Maya Khalil",
+    id: role === "doctor" ? "doctor_aya" : "patient_salma",
+    name: role === "doctor" ? "Dr. Aya" : "Salma",
     role,
   };
 

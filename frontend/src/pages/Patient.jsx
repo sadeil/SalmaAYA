@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Area,
@@ -51,7 +51,7 @@ import { api } from "../services/api";
 
 // Maps each exercise id from the daily plan to the rule file that knows how
 // to analyze that movement on camera. Exercises that don't have a matching
-// rule simply don't expose the camera toggle — we'd rather be honest about
+// rule simply don't expose the camera toggle â€” we'd rather be honest about
 // what we can actually score than fake feedback.
 const exerciseCameraRuleByPlanId = {
   1: "neckStretch",     // Neck release
@@ -64,7 +64,7 @@ export function PatientDashboard() {
     <>
       <PageHeader
         eyebrow="Friday, 12 June"
-        title="Good morning, Maya"
+        title="Good morning, Salma"
         description="Your body has shown up for you today. Let's return the favor."
         action={
           <button className="btn-primary">
@@ -115,7 +115,7 @@ export function PatientDashboard() {
                 Gentle back mobility
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                5 exercises · 25 minutes · Low impact
+                5 exercises آ· 25 minutes آ· Low impact
               </p>
             </div>
             <div className="text-right">
@@ -152,7 +152,7 @@ export function PatientDashboard() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-extrabold">{e.name}</p>
                   <p className="truncate text-xs text-slate-400">
-                    {e.duration} · {e.area}
+                    {e.duration} آ· {e.area}
                   </p>
                 </div>
                 {!e.done && (
@@ -311,7 +311,7 @@ export function ExerciseSchedule() {
         </span>
         <div className="flex-1">
           <div className="mb-2 flex justify-between text-sm font-extrabold">
-            <span>{isArabic ? `اكتمل ${done} من ${items.length} تمارين` : `${done} of ${items.length} exercises complete`}</span>
+            <span>{isArabic ? `ط§ظƒطھظ…ظ„ ${done} ظ…ظ† ${items.length} طھظ…ط§ط±ظٹظ†` : `${done} of ${items.length} exercises complete`}</span>
             <span>{Math.round((done / items.length) * 100)}%</span>
           </div>
           <Progress value={(done / items.length) * 100} />
@@ -453,7 +453,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
     : null;
 
   useEffect(() => {
-    // Pause the SVG animation when the camera is on — it's hidden anyway.
+    // Pause the SVG animation when the camera is on â€” it's hidden anyway.
     if (cameraMode) return undefined;
     if (!playing) return undefined;
     const timer = window.setInterval(
@@ -525,7 +525,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
         <div className="flex flex-col p-6 md:p-8">
           <p className="text-xs font-extrabold uppercase tracking-[.18em] text-teal-600">Guided session</p>
           <h2 className="mt-2 pe-10 text-3xl font-extrabold">{exercise.name}</h2>
-          <p className="mt-2 text-sm text-slate-500">{exercise.area} · {exercise.duration}</p>
+          <p className="mt-2 text-sm text-slate-500">{exercise.area} آ· {exercise.duration}</p>
           <div className="my-7">
             <div className="mb-2 flex justify-between text-xs font-extrabold">
               <span>Set {set} of {totalSets}</span>
@@ -561,7 +561,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
                 </p>
                 <p className="mt-1 text-xs text-teal-800/80">
                   {cameraRule
-                    ? "Use your webcam — we count reps and flag form issues in real time."
+                    ? "Use your webcam â€” we count reps and flag form issues in real time."
                     : "Camera form check isn't available for this exercise yet."}
                 </p>
               </div>
@@ -781,7 +781,7 @@ export function AIChat() {
     };
   }, []);
 
-  // Auto-scroll to the latest message whenever the list changes — but only
+  // Auto-scroll to the latest message whenever the list changes â€” but only
   // if the user was already near the bottom (so we don't yank them away
   // from scrollback they're reading).
   useEffect(() => {
@@ -830,7 +830,7 @@ export function AIChat() {
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
             </span>
             <div>
-              <p className="text-sm font-extrabold">Remy · Health Assistant</p>
+              <p className="text-sm font-extrabold">{"\u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u0635\u062D\u064A"}</p>
               <p className="flex items-center gap-1 text-xs text-teal-600">
                 <span className="h-2 w-2 rounded-full bg-teal-500 anim-pulse-glow" /> Online
               </p>
@@ -876,7 +876,7 @@ export function AIChat() {
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 className="field"
-                placeholder={draftPlan ? "Type approve to add this plan, or change to adjust it..." : "Answer Remy's question..."}
+                placeholder={draftPlan ? "\u0627\u0643\u062A\u0628\u064A \u0645\u0648\u0627\u0641\u0642\u0629 \u0644\u0644\u0625\u0636\u0627\u0641\u0629 \u0623\u0648 \u062A\u063A\u064A\u064A\u0631 \u0644\u0644\u062A\u0639\u062F\u064A\u0644..." : "\u0627\u0643\u062A\u0628\u064A \u0625\u062C\u0627\u0628\u062A\u0643..."}
               />
               <button disabled={sending || !text.trim()} onClick={send} className="btn-primary px-4 disabled:cursor-not-allowed disabled:opacity-60">
                 <Send size={18} />
@@ -944,25 +944,25 @@ function ChatPlanPreview({ plan, onApprove }) {
   return (
     <div className="mt-4 rounded-2xl border border-teal-100 bg-teal-50/70 p-3 text-ink">
       <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-teal-700">
-        Plan preview
+        {"\u0645\u0639\u0627\u064A\u0646\u0629 \u0627\u0644\u062E\u0637\u0629"}
       </p>
       <h4 className="mt-1 font-extrabold">{plan.title}</h4>
       <p className="mt-1 text-xs text-slate-500">
-        Focus: {plan.focus} · Pain {plan.painLevel}/10 · {plan.dailyTimeMinutes} min/day
+        {"\u0627\u0644\u062A\u0631\u0643\u064A\u0632"}: {plan.focus} آ· {"\u0627\u0644\u0623\u0644\u0645"} {plan.painLevel}/10 آ· {plan.dailyTimeMinutes} min/day
       </p>
       <div className="mt-3 space-y-2">
         {plan.exercises.map((exercise, index) => (
           <div key={`${exercise.name}-${index}`} className="rounded-xl bg-white/80 p-3">
             <p className="text-sm font-extrabold">{index + 1}. {exercise.name}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {exercise.area} · {exercise.duration} · {exercise.sets} set · {exercise.reps} reps
+              {exercise.area} آ· {exercise.duration} آ· {exercise.sets} set آ· {exercise.reps} reps
             </p>
           </div>
         ))}
       </div>
       <p className="mt-3 text-xs leading-5 text-slate-600">{plan.safety}</p>
       <button onClick={onApprove} className="btn-primary mt-3 w-full">
-        Approve and add to Exercises
+        {"\u0645\u0648\u0627\u0641\u0642\u0629 \u0648\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646"}
       </button>
     </div>
   );
@@ -993,7 +993,7 @@ export function Gamification() {
             <Gamepad2 size={15} /> Current quest
           </span>
           <h2 className="mt-8 text-4xl font-extrabold">Stage 3</h2>
-          <p className="mt-2 text-white/50">Mobility Builder · 82 points</p>
+          <p className="mt-2 text-white/50">Mobility Builder آ· 82 points</p>
           <div className="mt-8">
             <div className="mb-3 flex justify-between text-xs font-bold">
               <span>18 points to Stage 4</span>
@@ -1262,11 +1262,11 @@ export function MessagesPage() {
           >
             <div className="flex items-center gap-3">
               <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-200 to-violet-100 font-extrabold text-violet-700 shadow-inner">
-                AN
+                A
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-extrabold">Dr. Adam Noor</p>
+                <p className="truncate text-sm font-extrabold">Dr. Aya</p>
                 <p className="truncate text-xs text-slate-400">
                   Your plan looks good...
                 </p>
@@ -1278,11 +1278,11 @@ export function MessagesPage() {
         <section className="flex flex-col">
           <div className="flex items-center gap-3 border-b p-5">
             <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-violet-100 font-extrabold text-violet-700">
-              AN
+              A
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
             </span>
             <div>
-              <p className="font-extrabold">Dr. Adam Noor</p>
+              <p className="font-extrabold">Dr. Aya</p>
               <p className="flex items-center gap-1 text-xs text-teal-600">
                 <span className="h-2 w-2 rounded-full bg-teal-500 anim-pulse-glow" />
                 Usually replies within a day
@@ -1295,7 +1295,7 @@ export function MessagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-md rounded-3xl rounded-bl-md bg-white p-4 text-sm leading-6 shadow-card"
             >
-              Hi Maya, your progress this week looks strong. How did the lower
+              Hi Salma, your progress this week looks strong. How did the lower
               back mobility exercise feel?
             </motion.div>
             <motion.div

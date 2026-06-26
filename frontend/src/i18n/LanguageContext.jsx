@@ -97,7 +97,7 @@ const translations = {
   "Professional doctor follow-up": "متابعة طبية متخصصة",
   "Safety-led guidance": "إرشادات تضع السلامة أولًا",
   "Back to home": "العودة للرئيسية",
-  "Good morning, Maya": "صباح الخير، مايا",
+  "Good morning, Salma": "\u0635\u0628\u0627\u062D \u0627\u0644\u062E\u064A\u0631\u060C \u0633\u0644\u0645\u0649",
   "Your body has shown up for you today. Let's return the favor.": "جسدك يدعمك اليوم، فلنمنحه الرعاية التي يستحقها.",
   "Start today's exercises": "ابدأ تمارين اليوم",
   "Current points": "النقاط الحالية",
@@ -172,7 +172,7 @@ const translations = {
   "Search conversations": "البحث في المحادثات",
   "Write a message...": "اكتب رسالة...",
   "Clinical overview": "نظرة سريرية عامة",
-  "Good morning, Dr. Adam": "صباح الخير، د. آدم",
+  "Good morning, Dr. Aya": "\u0635\u0628\u0627\u062D \u0627\u0644\u062E\u064A\u0631\u060C \u062F. \u0622\u064A\u0629",
   "Review patient plans": "مراجعة خطط المرضى",
   "Total patients": "إجمالي المرضى",
   "Active patients": "المرضى النشطون",
@@ -216,9 +216,9 @@ const translations = {
   ,"patient space": "مساحة المريض"
   ,"doctor space": "مساحة الطبيب"
   ,"admin space": "مساحة المدير"
-  ,"Dr. Adam Noor": "د. آدم نور"
+  ,"Dr. Aya": "\u062F. \u0622\u064A\u0629"
   ,"Salma Admin": "سلمى - المديرة"
-  ,"Maya Khalil": "مايا خليل"
+  ,"Salma": "\u0633\u0644\u0645\u0649"
   ,"Omar Saleh": "عمر صالح"
   ,"Lina Nasser": "لينا ناصر"
   ,"Yousef Hamdan": "يوسف حمدان"
@@ -255,7 +255,7 @@ const translations = {
   ,"Stay connected with your doctor between reviews.": "ابقَ على تواصل مع طبيبك بين مواعيد المراجعة."
   ,"Usually replies within a day": "يرد عادة خلال يوم"
   ,"Your plan looks good...": "خطتك تبدو جيدة..."
-  ,"Hi Maya, your progress this week looks strong. How did the lower back mobility exercise feel?": "مرحبًا مايا، تقدمك هذا الأسبوع ممتاز. كيف كان شعورك أثناء تمرين حركة أسفل الظهر؟"
+  ,"Hi Salma, your progress this week looks strong. How did the lower back mobility exercise feel?": "\u0645\u0631\u062D\u0628\u0627 \u0633\u0644\u0645\u0649\u060C \u062A\u0642\u062F\u0645\u0643 \u0647\u0630\u0627 \u0627\u0644\u0623\u0633\u0628\u0648\u0639 \u0645\u0645\u062A\u0627\u0632. \u0643\u064A\u0641 \u0643\u0627\u0646 \u0634\u0639\u0648\u0631\u0643 \u0641\u064A \u062A\u0645\u0631\u064A\u0646 \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631\u061F"
   ,"Much better. I feel less tight after work now.": "أفضل بكثير. أشعر بشد أقل بعد العمل الآن."
   ,"Review suggested plans, respond to patients, and keep recovery on track.": "راجع الخطط المقترحة، واستجب للمرضى، وحافظ على مسار التعافي."
   ,"+4 this month": "+4 هذا الشهر"
@@ -336,12 +336,12 @@ const translations = {
   ,"30 minutes": "30 دقيقة"
   ,"40 minutes": "40 دقيقة"
   ,"RemedyQuest Health-Tech Platform": "منصة RemedyQuest للتقنيات الصحية"
-  ,"Hi Maya. I am your RemedyQuest assistant. What is bothering you today?": "مرحبًا مايا، أنا مساعد RemedyQuest. ما المشكلة التي تزعجك اليوم؟"
+  ,"Hi Salma. I am your RemedyQuest assistant. What is bothering you today?": "\u0645\u0631\u062D\u0628\u0627 \u0633\u0644\u0645\u0649\u060C \u0623\u0646\u0627 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u0635\u062D\u064A. \u0645\u0627 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0627\u0644\u064A\u0648\u0645\u061F"
   ,"My lower back feels tight after sitting at work.": "أشعر بشد في أسفل ظهري بعد الجلوس في العمل."
   ,"I can help shape a gentle mobility plan. How strong is the discomfort from 1 to 10?": "يمكنني مساعدتك في إعداد خطة حركة لطيفة. ما شدة الألم من 1 إلى 10؟"
   ,"Around 4, mostly by the end of the day.": "حوالي 4، وغالبًا في نهاية اليوم."
   ,"Thanks. Based on your answers, I suggest a 25-minute low-impact mobility plan. A doctor will review it before it becomes active.": "شكرًا. بناءً على إجاباتك، أقترح خطة حركة خفيفة لمدة 25 دقيقة، وسيراجعها الطبيب قبل تفعيلها."
-  ,"Remy · Health Assistant": "ريمي · المساعد الصحي"
+  ,"Health Assistant": "\u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u0635\u062D\u064A"
   ,"Gentle mobility": "تمارين حركة لطيفة"
   ,"5 daily": "5 يوميًا"
   ,"5 ILS refund": "استرداد 5 شيكل"

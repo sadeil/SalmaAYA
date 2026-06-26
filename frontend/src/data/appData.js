@@ -19,9 +19,5 @@ export const patients = [
 ];
 
 export const messages = [
-  { from: "ai", text: "Hi Maya. I am your RemedyQuest assistant. What is bothering you today?" },
-  { from: "user", text: "My lower back feels tight after sitting at work." },
-  { from: "ai", text: "I can help shape a gentle mobility plan. How strong is the discomfort from 1 to 10?" },
-  { from: "user", text: "Around 4, mostly by the end of the day." },
-  { from: "ai", text: "Thanks. Based on your answers, I suggest a 25-minute low-impact mobility plan. A doctor will review it before it becomes active." }
+  { from: "ai", text: "Hi Maya. I am your RemedyQuest assistant. I will ask a few quick questions, then create a suggested exercise plan for doctor review.\n\nWhat is the main problem today: back, neck, shoulder, knee, posture, stiffness, or something else?" }
 ];

@@ -25,6 +25,7 @@ export function messageList(_request, response) {
   return sendJson(response, 200, {
     messages,
     profile: patientProfile,
+    intake: chatCareState.intake,
     draftPlan: chatCareState.draftPlan,
     ai: aiProviderStatus(),
   });
@@ -44,13 +45,33 @@ export async function createMessage(request, response) {
   return sendJson(response, 201, {
     messages: [assistant],
     profile: patientProfile,
+    intake: chatCareState.intake,
     draftPlan: chatCareState.draftPlan,
     ai: aiProviderStatus(),
   });
 }
 
+const intakeQuestions = {
+  currentProblem: "What is the main problem today: back, neck, shoulder, knee, posture, stiffness, or something else?",
+  location: "Where exactly do you feel it? For example: lower back, right shoulder, left knee, or both sides.",
+  painLevel: "What is the pain or discomfort level right now from 0 to 10?",
+  symptoms: "Do you have numbness, tingling, weakness, swelling, fever, or sharp pain? If none, say none.",
+  duration: "How long has this been going on: today, a few days, weeks, or longer?",
+  dailyTimeMinutes: "How many minutes can you comfortably exercise today?",
+  goal: "What is your main goal: reduce pain, improve mobility, stretch, strengthen, or improve posture?",
+  difficulty: "What level should I start with: easy, medium, or challenging?",
+};
+
+const intakeOrder = Object.keys(intakeQuestions);
+
 async function buildAssistantResponse(text) {
   const normalized = normalizeText(text);
+
+  if (/\b(start over|restart|new plan)\b/i.test(normalized)) {
+    resetIntake();
+    chatCareState.draftPlan = null;
+    return { from: "ai", text: intakeQuestions.currentProblem };
+  }
 
   if (chatCareState.draftPlan && isApproval(normalized)) {
     const planTitle = chatCareState.draftPlan.title;
@@ -69,13 +90,16 @@ async function buildAssistantResponse(text) {
     chatCareState.draftPlan = null;
     return {
       from: "ai",
-      text: "No problem. I did not add anything. Tell me what you want changed: area, pain level, available time, or exercise difficulty.",
+      text: "No problem. I did not add anything. Tell me what you want changed, or type \"start over\" to begin the intake again.",
     };
   }
 
-  updateIntakeFromText(text);
-  const missing = missingIntakeFields();
-  if (missing) return { from: "ai", text: missing };
+  const expectedField = nextMissingField();
+  updateIntakeFromAnswer(expectedField, text);
+  const missingField = nextMissingField();
+  if (missingField) {
+    return { from: "ai", text: intakeQuestions[missingField], intake: chatCareState.intake };
+  }
 
   const draft = createDraftPlan();
   chatCareState.draftPlan = draft;
@@ -88,49 +112,53 @@ async function buildAssistantResponse(text) {
   };
 }
 
-function updateIntakeFromText(text) {
+function nextMissingField() {
+  return intakeOrder.find((field) => chatCareState.intake[field] == null || chatCareState.intake[field] === "");
+}
+
+function resetIntake() {
+  for (const field of intakeOrder) {
+    chatCareState.intake[field] = null;
+  }
+}
+
+function updateIntakeFromAnswer(field, text) {
   const lower = normalizeText(text);
   const intake = chatCareState.intake;
   const pain = extractPainLevel(lower);
   const minutes = extractDailyMinutes(lower);
 
-  if (mentionsProblem(lower)) {
-    intake.currentProblem = extractProblem(lower);
-  }
-  if (pain != null) {
-    intake.painLevel = pain;
-  }
-  if (minutes != null) {
-    intake.dailyTimeMinutes = minutes;
-  }
-}
+  if (field === "currentProblem") intake.currentProblem = extractProblem(lower) || text.slice(0, 80);
+  if (field === "location") intake.location = text.slice(0, 120);
+  if (field === "painLevel") intake.painLevel = pain ?? text.slice(0, 20);
+  if (field === "symptoms") intake.symptoms = text.slice(0, 160);
+  if (field === "duration") intake.duration = text.slice(0, 80);
+  if (field === "dailyTimeMinutes") intake.dailyTimeMinutes = minutes ?? text.slice(0, 20);
+  if (field === "goal") intake.goal = extractGoal(lower) || text.slice(0, 80);
+  if (field === "difficulty") intake.difficulty = extractDifficulty(lower) || "easy";
 
-function missingIntakeFields() {
-  const intake = chatCareState.intake;
-  if (!intake.currentProblem) {
-    return `I know your profile says ${patientProfile.problem} with about ${patientProfile.dailyTimeMinutes} minutes available. What is the current problem today: neck, shoulders, back, or something else?`;
-  }
-  if (intake.painLevel == null) {
-    return "What is the pain or discomfort level right now from 0 to 10?";
-  }
-  if (!intake.dailyTimeMinutes) {
-    intake.dailyTimeMinutes = patientProfile.dailyTimeMinutes;
-  }
-  return null;
+  if (pain != null) intake.painLevel = pain;
+  if (minutes != null) intake.dailyTimeMinutes = minutes;
+  if (!intake.currentProblem && mentionsProblem(lower)) intake.currentProblem = extractProblem(lower);
 }
 
 function createDraftPlan() {
   const intake = chatCareState.intake;
   const focus = intake.currentProblem;
-  const easy = intake.painLevel <= 5;
-  const dailyTime = intake.dailyTimeMinutes || patientProfile.dailyTimeMinutes;
+  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "challenging";
+  const dailyTime = Number(intake.dailyTimeMinutes) || patientProfile.dailyTimeMinutes;
   const plan = pickExercises(focus, easy);
   return {
-    title: `${capitalize(focus)} rehab pathway`,
+    title: `${capitalize(focus)} ${intake.goal || "mobility"} plan`,
     focus,
-    painLevel: intake.painLevel,
+    location: intake.location,
+    painLevel: Number(intake.painLevel) || 0,
     dailyTimeMinutes: dailyTime,
-    safety: "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+    goal: intake.goal,
+    difficulty: intake.difficulty,
+    safety: hasRedFlags(intake.symptoms)
+      ? "Because you mentioned possible warning symptoms, keep this very gentle and contact a clinician before pushing effort."
+      : "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
     exercises: plan,
   };
 }
@@ -190,7 +218,7 @@ function planPreviewText(plan) {
   const lines = plan.exercises
     .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} set, ${exercise.reps} reps, ${exercise.duration}`)
     .join("\n");
-  return `Plan preview for ${plan.focus}, pain ${plan.painLevel}/10:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
+  return `Plan preview for ${plan.location || plan.focus}, pain ${plan.painLevel}/10, goal: ${plan.goal || "mobility"}:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
 }
 
 function aiProviderStatus() {
@@ -262,6 +290,26 @@ function extractProblem(text) {
   if (text.includes("posture")) return "posture";
   if (text.includes("knee")) return "knee";
   return text.slice(0, 80);
+}
+
+function extractGoal(text) {
+  if (text.includes("pain")) return "reduce pain";
+  if (text.includes("mobil")) return "improve mobility";
+  if (text.includes("stretch")) return "stretch";
+  if (text.includes("strength")) return "strengthen";
+  if (text.includes("posture")) return "improve posture";
+  return null;
+}
+
+function extractDifficulty(text) {
+  if (text.includes("easy") || text.includes("gentle")) return "easy";
+  if (text.includes("medium") || text.includes("moderate")) return "medium";
+  if (text.includes("challenging") || text.includes("hard")) return "challenging";
+  return null;
+}
+
+function hasRedFlags(text) {
+  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""));
 }
 
 function capitalize(value) {

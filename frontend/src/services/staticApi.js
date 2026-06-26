@@ -21,7 +21,16 @@ const state = {
   },
   chatCareState: {
     draftPlan: null,
-    intake: {},
+    intake: {
+      currentProblem: null,
+      location: null,
+      painLevel: null,
+      symptoms: null,
+      duration: null,
+      dailyTimeMinutes: null,
+      goal: null,
+      difficulty: null,
+    },
   },
 };
 
@@ -42,35 +51,77 @@ function parseBody(options) {
   }
 }
 
-function createDraftPlan(text) {
+const intakeQuestions = {
+  currentProblem: "What is the main problem today: back, neck, shoulder, knee, posture, stiffness, or something else?",
+  location: "Where exactly do you feel it? For example: lower back, right shoulder, left knee, or both sides.",
+  painLevel: "What is the pain or discomfort level right now from 0 to 10?",
+  symptoms: "Do you have numbness, tingling, weakness, swelling, fever, or sharp pain? If none, say none.",
+  duration: "How long has this been going on: today, a few days, weeks, or longer?",
+  dailyTimeMinutes: "How many minutes can you comfortably exercise today?",
+  goal: "What is your main goal: reduce pain, improve mobility, stretch, strengthen, or improve posture?",
+  difficulty: "What level should I start with: easy, medium, or challenging?",
+};
+
+const intakeOrder = Object.keys(intakeQuestions);
+
+function nextMissingField() {
+  return intakeOrder.find((field) => state.chatCareState.intake[field] == null || state.chatCareState.intake[field] === "");
+}
+
+function updateIntakeFromAnswer(field, text) {
+  const intake = state.chatCareState.intake;
   const normalized = text.toLowerCase();
-  const focus = normalized.includes("neck")
-    ? "neck"
-    : normalized.includes("shoulder")
-      ? "shoulder"
-      : "back";
-  const painMatch = normalized.match(/\b(10|[0-9])\s*(?:\/\s*10|out of 10|pain)?\b/);
-  const minuteMatch = normalized.match(/\b([1-9][0-9]?)\s*(?:min|mins|minute|minutes)\b/);
-  const painLevel = painMatch ? Number(painMatch[1]) : 4;
-  const dailyTimeMinutes = minuteMatch ? Number(minuteMatch[1]) : 25;
-  const exercises = focus === "neck"
+  const pain = extractPainLevel(normalized);
+  const minutes = extractDailyMinutes(normalized);
+
+  if (field === "currentProblem") intake.currentProblem = extractProblem(normalized) || text;
+  if (field === "location") intake.location = text;
+  if (field === "painLevel") intake.painLevel = pain ?? text;
+  if (field === "symptoms") intake.symptoms = text;
+  if (field === "duration") intake.duration = text;
+  if (field === "dailyTimeMinutes") intake.dailyTimeMinutes = minutes ?? text;
+  if (field === "goal") intake.goal = extractGoal(normalized) || text;
+  if (field === "difficulty") intake.difficulty = extractDifficulty(normalized) || "easy";
+
+  if (pain != null) intake.painLevel = pain;
+  if (minutes != null) intake.dailyTimeMinutes = minutes;
+  if (!intake.currentProblem) intake.currentProblem = extractProblem(normalized);
+}
+
+function createDraftPlan() {
+  const intake = state.chatCareState.intake;
+  const focus = String(intake.currentProblem || "back");
+  const easy = Number(intake.painLevel) <= 5 && intake.difficulty !== "challenging";
+  const dailyTimeMinutes = Number(intake.dailyTimeMinutes) || 20;
+  const exercises = focus.includes("neck")
     ? [
         draftExercise("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
         draftExercise("Shoulder raise", "Neck & shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
         draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
       ]
+    : focus.includes("shoulder")
+      ? [
+          draftExercise("Shoulder raise", "Shoulders", 4, 1, 5, "bg-blue-100 text-blue-700"),
+          draftExercise("Neck mobility", "Neck & shoulders", 4, 1, 5, "bg-teal-100 text-teal-700"),
+          draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
+        ]
     : [
         draftExercise("Posture reset", "Full posture", 5, 1, 5, "bg-rose-100 text-rose-700"),
-        draftExercise("Cat-cow stretch", "Spine mobility", 6, 1, 5, "bg-violet-100 text-violet-700"),
-        draftExercise("Lower back mobility", "Lower back", 6, 1, 5, "bg-amber-100 text-amber-700"),
+        draftExercise("Cat-cow stretch", "Spine mobility", 6, easy ? 1 : 2, 5, "bg-violet-100 text-violet-700"),
+        draftExercise("Lower back mobility", "Lower back", 6, easy ? 1 : 2, 5, "bg-amber-100 text-amber-700"),
       ];
 
   return {
-    title: `${focus[0].toUpperCase()}${focus.slice(1)} rehab pathway`,
+    title: `${capitalize(focus)} ${intake.goal || "mobility"} plan`,
     focus,
-    painLevel,
+    location: intake.location,
+    painLevel: Number(intake.painLevel) || 0,
     dailyTimeMinutes,
-    safety: "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
+    goal: intake.goal,
+    difficulty: intake.difficulty,
+    safety: hasRedFlags(intake.symptoms)
+      ? "Because you mentioned possible warning symptoms, keep this very gentle and contact a clinician before pushing effort."
+      : "Use slow, pain-free motion. Stop if pain becomes sharp, numb, or unusual.",
     exercises,
   };
 }
@@ -91,7 +142,52 @@ function planPreviewText(plan) {
   const lines = plan.exercises
     .map((exercise, index) => `${index + 1}. ${exercise.name}: ${exercise.sets} set, ${exercise.reps} reps, ${exercise.duration}`)
     .join("\n");
-  return `Plan preview for ${plan.focus}, pain ${plan.painLevel}/10:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
+  return `Plan preview for ${plan.location || plan.focus}, pain ${plan.painLevel}/10, goal: ${plan.goal || "mobility"}:\n${lines}\n\nReply "approve" to add this to your Exercises page, or "change" to adjust it.`;
+}
+
+function extractProblem(text) {
+  if (text.includes("neck")) return "neck";
+  if (text.includes("shoulder")) return "shoulder";
+  if (text.includes("lower back")) return "lower back";
+  if (text.includes("back")) return "back";
+  if (text.includes("knee")) return "knee";
+  if (text.includes("posture")) return "posture";
+  return null;
+}
+
+function extractPainLevel(text) {
+  const match = text.match(/\b(10|[0-9])\s*(?:\/\s*10|out of 10|from 10|pain)?\b/);
+  return match ? Math.max(0, Math.min(Number(match[1]), 10)) : null;
+}
+
+function extractDailyMinutes(text) {
+  const match = text.match(/\b([1-9][0-9]?)\s*(?:min|mins|minute|minutes)\b/);
+  return match ? Math.max(5, Math.min(Number(match[1]), 45)) : null;
+}
+
+function extractGoal(text) {
+  if (text.includes("pain")) return "reduce pain";
+  if (text.includes("mobil")) return "improve mobility";
+  if (text.includes("stretch")) return "stretch";
+  if (text.includes("strength")) return "strengthen";
+  if (text.includes("posture")) return "improve posture";
+  return null;
+}
+
+function extractDifficulty(text) {
+  if (text.includes("easy") || text.includes("gentle")) return "easy";
+  if (text.includes("medium") || text.includes("moderate")) return "medium";
+  if (text.includes("challenging") || text.includes("hard")) return "challenging";
+  return null;
+}
+
+function hasRedFlags(text) {
+  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""));
+}
+
+function capitalize(value) {
+  const text = String(value || "Rehab");
+  return text[0].toUpperCase() + text.slice(1);
 }
 
 function adminDatabase() {
@@ -149,6 +245,7 @@ export async function staticRequest(path, options = {}) {
     return response({
       messages: state.messages,
       profile: state.patientProfile,
+      intake: state.chatCareState.intake,
       draftPlan: state.chatCareState.draftPlan,
       ai: { enabled: false, provider: "Static demo", model: "browser-demo" },
     });
@@ -158,7 +255,11 @@ export async function staticRequest(path, options = {}) {
     state.messages.push(outgoing);
 
     let assistant;
-    if (state.chatCareState.draftPlan && /\b(approve|yes|ok|add|confirm|save)\b/i.test(outgoing.text)) {
+    if (/\b(start over|restart|new plan)\b/i.test(outgoing.text)) {
+      state.chatCareState.intake = Object.fromEntries(intakeOrder.map((field) => [field, null]));
+      state.chatCareState.draftPlan = null;
+      assistant = { from: "ai", text: intakeQuestions.currentProblem };
+    } else if (state.chatCareState.draftPlan && /\b(approve|yes|ok|add|confirm|save)\b/i.test(outgoing.text)) {
       const added = state.chatCareState.draftPlan.exercises.map((exercise) => ({
         id: state.exercises.length + 1,
         ...exercise,
@@ -171,16 +272,27 @@ export async function staticRequest(path, options = {}) {
         exercises: added,
       };
       state.chatCareState.draftPlan = null;
+    } else if (state.chatCareState.draftPlan && /\b(change|edit|different|no)\b/i.test(outgoing.text)) {
+      state.chatCareState.draftPlan = null;
+      assistant = { from: "ai", text: "No problem. Tell me what you want to change, or type \"start over\" to begin the intake again." };
     } else {
-      const plan = createDraftPlan(outgoing.text);
-      state.chatCareState.draftPlan = plan;
-      assistant = { from: "ai", text: planPreviewText(plan), plan, needsConfirmation: true };
+      const expectedField = nextMissingField();
+      updateIntakeFromAnswer(expectedField, outgoing.text);
+      const missingField = nextMissingField();
+      if (missingField) {
+        assistant = { from: "ai", text: intakeQuestions[missingField], intake: state.chatCareState.intake };
+      } else {
+        const plan = createDraftPlan();
+        state.chatCareState.draftPlan = plan;
+        assistant = { from: "ai", text: planPreviewText(plan), plan, needsConfirmation: true };
+      }
     }
 
     state.messages.push(assistant);
     return response({
       messages: [assistant],
       profile: state.patientProfile,
+      intake: state.chatCareState.intake,
       draftPlan: state.chatCareState.draftPlan,
       ai: { enabled: false, provider: "Static demo", model: "browser-demo" },
     });

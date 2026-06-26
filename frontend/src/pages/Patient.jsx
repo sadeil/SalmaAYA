@@ -753,6 +753,7 @@ function ExerciseDemonstration({ motionType, phase, playing, speed }) {
 export function AIChat() {
   const [messages, setMessages] = useState(seedMessages);
   const [profile, setProfile] = useState(null);
+  const [intake, setIntake] = useState({});
   const [draftPlan, setDraftPlan] = useState(null);
   const [aiStatus, setAiStatus] = useState({ enabled: false, provider: "Local fallback" });
   const [text, setText] = useState("");
@@ -769,6 +770,7 @@ export function AIChat() {
         setMessages(nextMessages ?? []);
         if (!Array.isArray(payload)) {
           setProfile(payload.profile ?? null);
+          setIntake(payload.intake ?? {});
           setDraftPlan(payload.draftPlan ?? null);
           setAiStatus(payload.ai ?? { enabled: false, provider: "Local fallback" });
         }
@@ -802,6 +804,7 @@ export function AIChat() {
       const payload = await api.sendPatientMessage(outgoing);
       setMessages((current) => [...current, ...(payload.messages ?? [])]);
       setProfile(payload.profile ?? null);
+      setIntake(payload.intake ?? {});
       setDraftPlan(payload.draftPlan ?? null);
       setAiStatus(payload.ai ?? { enabled: false, provider: "Local fallback" });
     } catch (apiError) {
@@ -873,7 +876,7 @@ export function AIChat() {
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 className="field"
-                placeholder={draftPlan ? "Type approve to add this plan, or change to adjust it..." : "Describe your current problem..."}
+                placeholder={draftPlan ? "Type approve to add this plan, or change to adjust it..." : "Answer Remy's question..."}
               />
               <button disabled={sending || !text.trim()} onClick={send} className="btn-primary px-4 disabled:cursor-not-allowed disabled:opacity-60">
                 <Send size={18} />
@@ -893,8 +896,14 @@ export function AIChat() {
             <div className="mt-5 space-y-4 text-sm">
               {[
                 ["Profile", profile?.problem ?? "Lower back pain"],
-                ["Pain level", `${profile?.painLevel ?? 4} / 10`],
-                ["Daily time", `${profile?.dailyTimeMinutes ?? 25} minutes`],
+                ["Problem", intake.currentProblem ?? "Not answered"],
+                ["Location", intake.location ?? "Not answered"],
+                ["Pain level", intake.painLevel != null ? `${intake.painLevel} / 10` : `${profile?.painLevel ?? 4} / 10`],
+                ["Symptoms", intake.symptoms ?? "Not answered"],
+                ["Duration", intake.duration ?? "Not answered"],
+                ["Daily time", intake.dailyTimeMinutes ? `${intake.dailyTimeMinutes} minutes` : `${profile?.dailyTimeMinutes ?? 25} minutes`],
+                ["Goal", intake.goal ?? "Not answered"],
+                ["Level", intake.difficulty ?? "Not answered"],
                 ["AI mode", aiStatus.provider ?? "Local fallback"],
                 ["Draft plan", draftPlan?.title ?? "Not approved yet"],
                 ["Exercises", draftPlan ? `${draftPlan.exercises.length} pending` : "Ask in chat"],

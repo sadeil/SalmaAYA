@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Area,
   AreaChart,
@@ -176,13 +177,13 @@ export function PatientDashboard() {
           <p className="relative mt-3 text-sm leading-6 text-white/65">
             Tell your AI assistant about any changes before starting your plan.
           </p>
-          <a
-            href="/patient/chat"
+          <Link
+            to="/patient/chat"
             className="group relative mt-auto flex items-center justify-between rounded-2xl bg-white/10 p-4 text-sm font-extrabold transition hover:bg-white/15"
           >
             Chat with AI
             <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
-          </a>
+          </Link>
         </div>
       </div>
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_.4fr]">

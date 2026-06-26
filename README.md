@@ -28,6 +28,16 @@ This starts:
 - Backend API: `http://127.0.0.1:8787`
 - Frontend dev server: Vite, with `/api` proxied to the backend
 
+## Public GitHub Pages Demo
+
+The app is published as a static browser demo at:
+
+```text
+https://sadeil.github.io/SalmaAYA/
+```
+
+The GitHub Pages build uses in-browser demo data so anyone can open the link without running the Node backend locally.
+
 ## Run Frontend Only
 
 ```bash

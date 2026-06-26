@@ -52,9 +52,9 @@ export function PublicNav() {
       >
         <Brand />
         <div className="hidden items-center gap-8 text-sm font-bold text-slate-600 md:flex">
-          <a className="link-underline transition hover:text-teal-600" href="/#how">{t("How it works")}</a>
-          <a className="link-underline transition hover:text-teal-600" href="/#features">{t("Features")}</a>
-          <a className="link-underline transition hover:text-teal-600" href="/#safety">{t("Safety")}</a>
+          <a className="link-underline transition hover:text-teal-600" href="#how">{t("How it works")}</a>
+          <a className="link-underline transition hover:text-teal-600" href="#features">{t("Features")}</a>
+          <a className="link-underline transition hover:text-teal-600" href="#safety">{t("Safety")}</a>
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <LanguageToggle />

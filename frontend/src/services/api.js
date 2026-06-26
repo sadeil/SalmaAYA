@@ -1,5 +1,8 @@
+import { staticRequest } from "./staticApi";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 const API_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 10000);
+const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === "true";
 
 export class ApiError extends Error {
   constructor(message, details = {}) {
@@ -25,6 +28,8 @@ async function parseBody(response) {
 }
 
 async function request(path, options = {}) {
+  if (STATIC_DEMO) return staticRequest(path, options);
+
   const id = requestId();
   const method = options.method || "GET";
 
@@ -87,4 +92,4 @@ export const api = {
   adminDatabase: () => request("/admin/database"),
 };
 
-export { API_BASE_URL, API_TIMEOUT_MS };
+export { API_BASE_URL, API_TIMEOUT_MS, STATIC_DEMO };

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Area,
@@ -760,6 +760,12 @@ export function AIChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const scrollRef = useRef(null);
+  const visibleIntake = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index]?.intake) return { ...intake, ...messages[index].intake };
+    }
+    return intake;
+  }, [intake, messages]);
 
   useEffect(() => {
     let active = true;
@@ -896,14 +902,14 @@ export function AIChat() {
             <div className="mt-5 space-y-4 text-sm">
               {[
                 ["Profile", profile?.problem ?? "Lower back pain"],
-                ["Problem", intake.currentProblem ?? "Not answered"],
-                ["Location", intake.location ?? "Not answered"],
-                ["Pain level", intake.painLevel != null ? `${intake.painLevel} / 10` : `${profile?.painLevel ?? 4} / 10`],
-                ["Symptoms", intake.symptoms ?? "Not answered"],
-                ["Duration", intake.duration ?? "Not answered"],
-                ["Daily time", intake.dailyTimeMinutes ? `${intake.dailyTimeMinutes} minutes` : `${profile?.dailyTimeMinutes ?? 25} minutes`],
-                ["Goal", intake.goal ?? "Not answered"],
-                ["Level", intake.difficulty ?? "Not answered"],
+                ["Problem", visibleIntake.currentProblem ?? "Not answered"],
+                ["Location", visibleIntake.location ?? "Not answered"],
+                ["Pain level", visibleIntake.painLevel != null ? `${visibleIntake.painLevel} \u0645\u0646 10` : "Not answered"],
+                ["Symptoms", visibleIntake.symptoms ?? "Not answered"],
+                ["Duration", visibleIntake.duration ?? "Not answered"],
+                ["Daily time", visibleIntake.dailyTimeMinutes ? `${visibleIntake.dailyTimeMinutes} minutes` : "Not answered"],
+                ["Goal", visibleIntake.goal ?? "Not answered"],
+                ["Level", visibleIntake.difficulty ?? "Not answered"],
                 ["AI mode", aiStatus.provider ?? "Local fallback"],
                 ["Draft plan", draftPlan?.title ?? "Not approved yet"],
                 ["Exercises", draftPlan ? `${draftPlan.exercises.length} pending` : "Ask in chat"],
@@ -913,7 +919,9 @@ export function AIChat() {
                   className="flex justify-between border-b pb-3 last:border-0"
                 >
                   <span className="text-slate-400">{a}</span>
-                  <span className="font-bold">{b}</span>
+                  <span className="font-bold" data-no-translate>
+                    {b}
+                  </span>
                 </div>
               ))}
             </div>

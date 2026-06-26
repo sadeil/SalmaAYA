@@ -70,7 +70,7 @@ async function buildAssistantResponse(text) {
   if (/\b(start over|restart|new plan)\b/i.test(normalized) || /(\u0645\u0646 \u062C\u062F\u064A\u062F|\u062E\u0637\u0629 \u062C\u062F\u064A\u062F\u0629)/.test(text)) {
     resetIntake();
     chatCareState.draftPlan = null;
-    return { from: "ai", text: intakeQuestions.currentProblem };
+    return { from: "ai", text: intakeQuestions.currentProblem, intake: intakeSnapshot() };
   }
 
   if (chatCareState.draftPlan && isApproval(normalized)) {
@@ -83,6 +83,7 @@ async function buildAssistantResponse(text) {
       text: `\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629. \u0623\u0636\u0641\u062A ${added.length} \u062A\u0645\u0627\u0631\u064A\u0646 \u0625\u0644\u0649 \u0635\u0641\u062D\u0629 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646.`,
       planApplied: true,
       exercises: added,
+      intake: intakeSnapshot(),
     };
   }
 
@@ -91,14 +92,20 @@ async function buildAssistantResponse(text) {
     return {
       from: "ai",
       text: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0629. \u0627\u0643\u062A\u0628\u064A \u0645\u0627 \u0627\u0644\u0630\u064A \u062A\u0631\u064A\u062F\u064A\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u060C \u0623\u0648 \u0627\u0643\u062A\u0628\u064A \"\u0645\u0646 \u062C\u062F\u064A\u062F\".",
+      intake: intakeSnapshot(),
     };
   }
 
   const expectedField = nextMissingField();
+  const invalidMessage = invalidAnswerMessage(expectedField, text);
+  if (invalidMessage) {
+    return { from: "ai", text: invalidMessage, intake: intakeSnapshot() };
+  }
+
   updateIntakeFromAnswer(expectedField, text);
   const missingField = nextMissingField();
   if (missingField) {
-    return { from: "ai", text: intakeQuestions[missingField], intake: chatCareState.intake };
+    return { from: "ai", text: intakeQuestions[missingField], intake: intakeSnapshot() };
   }
 
   const draft = createDraftPlan();
@@ -109,6 +116,7 @@ async function buildAssistantResponse(text) {
     text: aiText ?? planPreviewText(draft),
     plan: draft,
     needsConfirmation: true,
+    intake: intakeSnapshot(),
   };
 }
 
@@ -120,6 +128,39 @@ function resetIntake() {
   for (const field of intakeOrder) {
     chatCareState.intake[field] = null;
   }
+}
+
+function intakeSnapshot() {
+  return JSON.parse(JSON.stringify(chatCareState.intake));
+}
+
+function invalidAnswerMessage(field, text) {
+  const normalized = normalizeText(text);
+  if (!normalized || /^(hi|hey|hello|هاي|مرحبا|اهلا|أهلا|سلام)$/.test(normalized)) {
+    return intakeQuestions[field];
+  }
+  if (field === "currentProblem" && !extractProblem(normalized)) {
+    return "\u0644\u0645 \u0623\u0641\u0647\u0645 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0628\u0648\u0636\u0648\u062D. \u0627\u0643\u062A\u0628\u064A \u0645\u062B\u0644\u0627: \u0623\u0644\u0645 \u0641\u064A \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629.";
+  }
+  if (field === "location" && (/^(no|none|لا|لا اشعر|لا يوجد)$/.test(normalized) || normalized.length < 3)) {
+    return "\u0627\u062D\u062A\u0627\u062C \u0627\u0644\u0645\u0643\u0627\u0646 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F. \u0645\u062B\u0644\u0627: \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631 \u0623\u0648 \u0627\u0644\u0643\u062A\u0641 \u0627\u0644\u0623\u064A\u0645\u0646.";
+  }
+  if (field === "painLevel" && extractPainLevel(normalized) == null) {
+    return "\u0627\u0643\u062A\u0628\u064A \u0631\u0642\u0645\u0627 \u0645\u0646 0 \u0625\u0644\u0649 10 \u0644\u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645. \u0645\u062B\u0644\u0627: 4.";
+  }
+  if (field === "duration" && normalized.length < 3) {
+    return "\u0645\u0646\u0630 \u0645\u062A\u0649\u061F \u0645\u062B\u0644\u0627: \u0627\u0644\u064A\u0648\u0645\u060C \u0645\u0646\u0630 \u0623\u0633\u0628\u0648\u0639\u060C \u0623\u0648 \u0645\u0646\u0630 \u0634\u0647\u0631.";
+  }
+  if (field === "dailyTimeMinutes" && extractDailyMinutes(normalized) == null) {
+    return "\u0627\u0643\u062A\u0628\u064A \u0639\u062F\u062F \u0627\u0644\u062F\u0642\u0627\u0626\u0642 \u0627\u0644\u0645\u062A\u0627\u062D\u0629. \u0645\u062B\u0644\u0627: 20 \u062F\u0642\u064A\u0642\u0629.";
+  }
+  if (field === "goal" && !extractGoal(normalized)) {
+    return "\u0645\u0627 \u0647\u062F\u0641\u0643\u061F \u0645\u062B\u0644\u0627: \u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645 \u0623\u0648 \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629.";
+  }
+  if (field === "difficulty" && !extractDifficulty(normalized)) {
+    return "\u0627\u062E\u062A\u0627\u0631\u064A \u0645\u0633\u062A\u0648\u0649\u0627 \u0648\u0627\u062D\u062F\u0627: \u0633\u0647\u0644\u060C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0645\u062A\u0642\u062F\u0645.";
+  }
+  return "";
 }
 
 function updateIntakeFromAnswer(field, text) {
@@ -293,18 +334,18 @@ function extractProblem(text) {
 }
 
 function extractGoal(text) {
-  if (text.includes("pain")) return "reduce pain";
-  if (text.includes("mobil")) return "improve mobility";
-  if (text.includes("stretch")) return "stretch";
-  if (text.includes("strength")) return "strengthen";
-  if (text.includes("posture")) return "improve posture";
+  if (text.includes("pain") || text.includes("\u0623\u0644\u0645") || text.includes("\u0627\u0644\u0645")) return "\u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645";
+  if (text.includes("mobil") || text.includes("\u062D\u0631\u0643\u0629")) return "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629";
+  if (text.includes("stretch") || text.includes("\u062A\u0645\u062F\u062F")) return "\u062A\u0645\u062F\u062F";
+  if (text.includes("strength") || text.includes("\u062A\u0642\u0648\u064A\u0629")) return "\u062A\u0642\u0648\u064A\u0629";
+  if (text.includes("posture") || text.includes("\u0648\u0636\u0639\u064A\u0629")) return "\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u0648\u0636\u0639\u064A\u0629";
   return null;
 }
 
 function extractDifficulty(text) {
-  if (text.includes("easy") || text.includes("gentle")) return "easy";
-  if (text.includes("medium") || text.includes("moderate")) return "medium";
-  if (text.includes("challenging") || text.includes("hard")) return "challenging";
+  if (text.includes("easy") || text.includes("gentle") || text.includes("\u0633\u0647\u0644")) return "\u0633\u0647\u0644";
+  if (text.includes("medium") || text.includes("moderate") || text.includes("\u0645\u062A\u0648\u0633\u0637")) return "\u0645\u062A\u0648\u0633\u0637";
+  if (text.includes("challenging") || text.includes("hard") || text.includes("\u0645\u062A\u0642\u062F\u0645")) return "\u0645\u062A\u0642\u062F\u0645";
   return null;
 }
 
@@ -332,6 +373,7 @@ function extractPainLevel(text) {
   const painPatterns = [
     /\b(10|[0-9])\s*\/\s*10\b/,
     /\b(10|[0-9])\s*(?:out of|from)\s*10\b/,
+    /\b(10|[0-9])\s*\u0645\u0646\s*10\b/,
     /\b(?:pain|discomfort|ache|وجع|الم|ألم)\D{0,12}(10|[0-9])\b/,
     /\b(10|[0-9])\D{0,12}(?:pain|discomfort|ache|وجع|الم|ألم)\b/,
   ];
@@ -343,7 +385,7 @@ function extractPainLevel(text) {
 }
 
 function extractDailyMinutes(text) {
-  const match = text.match(/\b([1-9][0-9]?)\s*(?:min|mins|minute|minutes|دقيقة|دقايق)\b/);
+  const match = text.match(/(?:^|\s)([1-9][0-9]?)\s*(?:min|mins|minute|minutes|دقيقة|دقائق|دقايق)(?=\s|$|[.,،])/);
   return match ? clampNumber(match[1], 5, 45) : null;
 }
 

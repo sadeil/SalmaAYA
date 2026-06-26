@@ -68,9 +68,42 @@ function nextMissingField() {
   return intakeOrder.find((field) => state.chatCareState.intake[field] == null || state.chatCareState.intake[field] === "");
 }
 
+function intakeSnapshot() {
+  return clone(state.chatCareState.intake);
+}
+
+function invalidAnswerMessage(field, text) {
+  const normalized = normalizeAnswer(text);
+  if (!normalized || /^(hi|hey|hello|هاي|مرحبا|اهلا|أهلا|سلام)$/.test(normalized)) {
+    return intakeQuestions[field];
+  }
+  if (field === "currentProblem" && !extractProblem(normalized)) {
+    return "\u0644\u0645 \u0623\u0641\u0647\u0645 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0628\u0648\u0636\u0648\u062D. \u0627\u0643\u062A\u0628\u064A \u0645\u062B\u0644\u0627: \u0623\u0644\u0645 \u0641\u064A \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629.";
+  }
+  if (field === "location" && (/^(no|none|لا|لا اشعر|لا يوجد)$/.test(normalized) || normalized.length < 3)) {
+    return "\u0627\u062D\u062A\u0627\u062C \u0627\u0644\u0645\u0643\u0627\u0646 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F. \u0645\u062B\u0644\u0627: \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631 \u0623\u0648 \u0627\u0644\u0643\u062A\u0641 \u0627\u0644\u0623\u064A\u0645\u0646.";
+  }
+  if (field === "painLevel" && extractPainLevel(normalized) == null) {
+    return "\u0627\u0643\u062A\u0628\u064A \u0631\u0642\u0645\u0627 \u0645\u0646 0 \u0625\u0644\u0649 10 \u0644\u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645. \u0645\u062B\u0644\u0627: 4.";
+  }
+  if (field === "duration" && normalized.length < 3) {
+    return "\u0645\u0646\u0630 \u0645\u062A\u0649\u061F \u0645\u062B\u0644\u0627: \u0627\u0644\u064A\u0648\u0645\u060C \u0645\u0646\u0630 \u0623\u0633\u0628\u0648\u0639\u060C \u0623\u0648 \u0645\u0646\u0630 \u0634\u0647\u0631.";
+  }
+  if (field === "dailyTimeMinutes" && extractDailyMinutes(normalized) == null) {
+    return "\u0627\u0643\u062A\u0628\u064A \u0639\u062F\u062F \u0627\u0644\u062F\u0642\u0627\u0626\u0642 \u0627\u0644\u0645\u062A\u0627\u062D\u0629. \u0645\u062B\u0644\u0627: 20 \u062F\u0642\u064A\u0642\u0629.";
+  }
+  if (field === "goal" && !extractGoal(normalized)) {
+    return "\u0645\u0627 \u0647\u062F\u0641\u0643\u061F \u0645\u062B\u0644\u0627: \u062A\u062E\u0641\u064A\u0641 \u0627\u0644\u0623\u0644\u0645 \u0623\u0648 \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062D\u0631\u0643\u0629.";
+  }
+  if (field === "difficulty" && !extractDifficulty(normalized)) {
+    return "\u0627\u062E\u062A\u0627\u0631\u064A \u0645\u0633\u062A\u0648\u0649\u0627 \u0648\u0627\u062D\u062F\u0627: \u0633\u0647\u0644\u060C \u0645\u062A\u0648\u0633\u0637\u060C \u0623\u0648 \u0645\u062A\u0642\u062F\u0645.";
+  }
+  return "";
+}
+
 function updateIntakeFromAnswer(field, text) {
   const intake = state.chatCareState.intake;
-  const normalized = text.toLowerCase();
+  const normalized = normalizeAnswer(text);
   const pain = extractPainLevel(normalized);
   const minutes = extractDailyMinutes(normalized);
 
@@ -156,13 +189,21 @@ function extractProblem(text) {
 }
 
 function extractPainLevel(text) {
-  const match = text.match(/\b(10|[0-9])\s*(?:\/\s*10|out of 10|from 10|pain)?\b/);
+  const match = normalizeAnswer(text).match(/\b(10|[0-9])\s*(?:\/\s*10|out of 10|from 10|pain)?\b/);
   return match ? Math.max(0, Math.min(Number(match[1]), 10)) : null;
 }
 
 function extractDailyMinutes(text) {
-  const match = text.match(/\b([1-9][0-9]?)\s*(?:min|mins|minute|minutes)\b/);
+  const match = normalizeAnswer(text).match(/(?:^|\s)([1-9][0-9]?)\s*(?:min|mins|minute|minutes|\u062F\u0642\u064A\u0642\u0629|\u062F\u0642\u0627\u0626\u0642|\u062F\u0642\u0627\u064A\u0642)(?=\s|$|[.,\u060C])/);
   return match ? Math.max(5, Math.min(Number(match[1]), 45)) : null;
+}
+
+function normalizeAnswer(text) {
+  return String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\u0660-\u0669]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0));
 }
 
 function extractGoal(text) {
@@ -263,7 +304,7 @@ export async function staticRequest(path, options = {}) {
     if (/\b(start over|restart|new plan)\b/i.test(outgoing.text) || /(\u0645\u0646 \u062C\u062F\u064A\u062F|\u062E\u0637\u0629 \u062C\u062F\u064A\u062F\u0629)/.test(outgoing.text)) {
       state.chatCareState.intake = Object.fromEntries(intakeOrder.map((field) => [field, null]));
       state.chatCareState.draftPlan = null;
-      assistant = { from: "ai", text: intakeQuestions.currentProblem };
+      assistant = { from: "ai", text: intakeQuestions.currentProblem, intake: intakeSnapshot() };
     } else if (state.chatCareState.draftPlan && (/\b(approve|yes|ok|add|confirm|save)\b/i.test(outgoing.text) || /(\u0645\u0648\u0627\u0641\u0642\u0629|\u0646\u0639\u0645|\u062A\u0645\u0627\u0645|\u0623\u0636\u0641|\u0627\u0636\u0641)/.test(outgoing.text))) {
       const added = state.chatCareState.draftPlan.exercises.map((exercise) => ({
         id: state.exercises.length + 1,
@@ -275,21 +316,27 @@ export async function staticRequest(path, options = {}) {
         text: `\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629. \u0623\u0636\u0641\u062A ${added.length} \u062A\u0645\u0627\u0631\u064A\u0646 \u0625\u0644\u0649 \u0635\u0641\u062D\u0629 \u0627\u0644\u062A\u0645\u0627\u0631\u064A\u0646.`,
         planApplied: true,
         exercises: added,
+        intake: intakeSnapshot(),
       };
       state.chatCareState.draftPlan = null;
     } else if (state.chatCareState.draftPlan && (/\b(change|edit|different|no)\b/i.test(outgoing.text) || /(\u062A\u063A\u064A\u064A\u0631|\u062A\u0639\u062F\u064A\u0644|\u0644\u0627)/.test(outgoing.text))) {
       state.chatCareState.draftPlan = null;
-      assistant = { from: "ai", text: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0629. \u0627\u0643\u062A\u0628\u064A \u0645\u0627 \u0627\u0644\u0630\u064A \u062A\u0631\u064A\u062F\u064A\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u060C \u0623\u0648 \u0627\u0643\u062A\u0628\u064A \"\u0645\u0646 \u062C\u062F\u064A\u062F\"." };
+      assistant = { from: "ai", text: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0629. \u0627\u0643\u062A\u0628\u064A \u0645\u0627 \u0627\u0644\u0630\u064A \u062A\u0631\u064A\u062F\u064A\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u060C \u0623\u0648 \u0627\u0643\u062A\u0628\u064A \"\u0645\u0646 \u062C\u062F\u064A\u062F\".", intake: intakeSnapshot() };
     } else {
       const expectedField = nextMissingField();
-      updateIntakeFromAnswer(expectedField, outgoing.text);
-      const missingField = nextMissingField();
-      if (missingField) {
-        assistant = { from: "ai", text: intakeQuestions[missingField], intake: state.chatCareState.intake };
+      const invalidMessage = invalidAnswerMessage(expectedField, outgoing.text);
+      if (invalidMessage) {
+        assistant = { from: "ai", text: invalidMessage, intake: intakeSnapshot() };
       } else {
-        const plan = createDraftPlan();
-        state.chatCareState.draftPlan = plan;
-        assistant = { from: "ai", text: planPreviewText(plan), plan, needsConfirmation: true };
+        updateIntakeFromAnswer(expectedField, outgoing.text);
+        const missingField = nextMissingField();
+        if (missingField) {
+          assistant = { from: "ai", text: intakeQuestions[missingField], intake: intakeSnapshot() };
+        } else {
+          const plan = createDraftPlan();
+          state.chatCareState.draftPlan = plan;
+          assistant = { from: "ai", text: planPreviewText(plan), plan, needsConfirmation: true, intake: intakeSnapshot() };
+        }
       }
     }
 

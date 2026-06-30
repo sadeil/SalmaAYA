@@ -270,6 +270,8 @@ function adminDatabase() {
       connected: true,
       mode: "GitHub Pages browser demo",
       path: "in-memory demo data",
+      sizeBytes: new Blob([JSON.stringify(tables)]).size,
+      updatedAt: new Date().toISOString(),
     },
     counts: Object.fromEntries(Object.entries(tables).map(([key, value]) => [key, Array.isArray(value) ? value.length : 1])),
     tables,

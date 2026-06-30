@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { appConfig } from "./appConfig.mjs";
 
@@ -29,11 +29,15 @@ export function saveJsonDatabase(data) {
 }
 
 export function databaseStatus() {
+  const connected = existsSync(databaseConfig.filePath);
+  const fileStats = connected ? statSync(databaseConfig.filePath) : null;
   return {
     adapter: databaseConfig.adapter,
-    connected: existsSync(databaseConfig.filePath),
+    connected,
     mode: "local JSON database",
     path: databaseConfig.filePath,
+    sizeBytes: fileStats?.size ?? 0,
+    updatedAt: fileStats?.mtime.toISOString() ?? null,
   };
 }
 

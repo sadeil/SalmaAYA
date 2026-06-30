@@ -2,8 +2,11 @@ import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 
 // MediaPipe is bundled from npm. The WASM files and pose model are served from
 // frontend/public so the form coach does not depend on jsDelivr at runtime.
-const WASM_ROOT = "/mediapipe/wasm";
-const MODEL_URL = "/models/pose_landmarker_lite.task";
+const PUBLIC_BASE = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+const WASM_ROOT = `${PUBLIC_BASE}mediapipe/wasm`;
+const MODEL_URL = `${PUBLIC_BASE}models/pose_landmarker_lite.task`;
 
 let filesetPromise = null;
 function loadFileset() {
@@ -27,18 +30,26 @@ export async function createPoseLandmarker({
   minTrackingConfidence = 0.6,
 } = {}) {
   const filesetResolver = await loadFileset();
-  const landmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
-    baseOptions: {
-      modelAssetPath: modelUrl,
-      delegate: "GPU",
-    },
+  const options = {
+    baseOptions: { modelAssetPath: modelUrl, delegate: "GPU" },
     runningMode: "VIDEO",
     numPoses,
     minPoseDetectionConfidence: minDetectionConfidence,
     minPosePresenceConfidence: minPresenceConfidence,
     minTrackingConfidence,
     outputSegmentationMasks: false,
-  });
+  };
+
+  let landmarker;
+  try {
+    landmarker = await PoseLandmarker.createFromOptions(filesetResolver, options);
+  } catch (gpuError) {
+    console.warn(`MediaPipe GPU initialization failed; using CPU (${gpuError.message}).`);
+    landmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+      ...options,
+      baseOptions: { modelAssetPath: modelUrl, delegate: "CPU" },
+    });
+  }
 
   let lastTimestampMs = -1;
   return {

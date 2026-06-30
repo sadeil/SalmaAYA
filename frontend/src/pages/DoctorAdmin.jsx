@@ -10,9 +10,13 @@ import {
   CircleDollarSign,
   ClipboardCheck,
   CreditCard,
+  Braces,
+  Clock3,
   Database,
   FilePenLine,
   MessageCircle,
+  RefreshCw,
+  Rows3,
   Search,
   ShieldCheck,
   Sparkles,
@@ -311,16 +315,27 @@ export function PatientProfile() {
 export function AdminDashboard() {
   const [database, setDatabase] = useState(null);
   const [databaseError, setDatabaseError] = useState("");
+  const [databaseLoading, setDatabaseLoading] = useState(true);
+  const [databaseRefreshKey, setDatabaseRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setDatabaseLoading(true);
+    setDatabaseError("");
     api.adminDatabase()
-      .then((snapshot) => active && setDatabase(snapshot))
-      .catch((apiError) => active && setDatabaseError(apiError.message));
+      .then((snapshot) => {
+        if (active) setDatabase(snapshot);
+      })
+      .catch((apiError) => {
+        if (active) setDatabaseError(apiError.message);
+      })
+      .finally(() => {
+        if (active) setDatabaseLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, []);
+  }, [databaseRefreshKey]);
 
   return (
     <>
@@ -401,48 +416,229 @@ export function AdminDashboard() {
         <StatCard icon={CircleDollarSign} label="Refunded total" value="3,145 ILS" tone="amber" trend={[600, 900, 1300, 1900, 2200, 2700, 3145]} />
         <StatCard icon={Activity} label="Avg. commitment" value="78%" tone="blue" trend={[64, 68, 70, 72, 74, 76, 78]} />
       </div>
-      <DatabaseViewer snapshot={database} error={databaseError} />
+      <DatabaseViewer
+        snapshot={database}
+        error={databaseError}
+        loading={databaseLoading}
+        onRefresh={() => setDatabaseRefreshKey((value) => value + 1)}
+      />
     </>
   );
 }
 
-function DatabaseViewer({ snapshot, error }) {
-  const tables = snapshot?.tables || {};
-  const tableNames = Object.keys(tables);
+function DatabaseViewer({ snapshot, error, loading, onRefresh }) {
+  const tables = useMemo(() => snapshot?.tables || {}, [snapshot]);
+  const tableNames = useMemo(() => Object.keys(tables), [tables]);
+  const [selectedTable, setSelectedTable] = useState("");
+  const [query, setQuery] = useState("");
+  const [inspectedValue, setInspectedValue] = useState(null);
+
+  useEffect(() => {
+    if (!selectedTable && tableNames.length) setSelectedTable(tableNames[0]);
+    if (selectedTable && !tableNames.includes(selectedTable)) setSelectedTable(tableNames[0] || "");
+  }, [selectedTable, tableNames]);
+
+  const rows = useMemo(() => databaseRows(tables[selectedTable]), [selectedTable, tables]);
+  const columns = useMemo(() => databaseColumns(rows), [rows]);
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return rows;
+    return rows.filter((row) => JSON.stringify(row).toLowerCase().includes(normalizedQuery));
+  }, [query, rows]);
+  const totalRecords = Object.values(tables).reduce((total, value) => total + databaseTableCount(value), 0);
 
   return (
-    <div className="card mt-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <span className="pill bg-teal-50 text-teal-700"><Database size={14} /> Live database</span>
-          <h3 className="mt-4 text-xl font-extrabold">Database viewer</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Read-only view of the data saved by the backend JSON database.
-          </p>
+    <section data-no-translate className="mt-5 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-card">
+      <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white sm:px-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-start gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-teal-400/15 text-teal-300">
+              <Database size={22} />
+            </span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-xl font-extrabold">Database viewer</h3>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[11px] font-extrabold text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Live database
+                </span>
+                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-slate-300">READ ONLY</span>
+              </div>
+              <p className="mt-1.5 text-sm text-slate-400">Inspect persisted application records and nested JSON values.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-extrabold text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            {loading ? "Refreshing..." : "Refresh snapshot"}
+          </button>
         </div>
-        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500 lg:max-w-[460px]">
-          <p>Loaded tables: <span className="text-teal-700">{tableNames.length}</span></p>
-          <p className="mt-1 break-all">File: {snapshot?.status?.path || "database/data/app-db.json"}</p>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <DatabaseMetric label="Connection" value={snapshot?.status?.connected ? "Connected" : "Unavailable"} tone="emerald" />
+          <DatabaseMetric label="Adapter" value={snapshot?.status?.adapter || "json-file"} />
+          <DatabaseMetric label="Loaded tables:" value={String(tableNames.length)} />
+          <DatabaseMetric label="Total records" value={String(totalRecords)} />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-slate-500">
+          <span className="inline-flex items-center gap-1.5"><Clock3 size={12} /> Snapshot: {formatDatabaseTime(snapshot?.status?.updatedAt)}</span>
+          <span className="min-w-0 truncate">File: {snapshot?.status?.path || "database/data/app-db.json"}</span>
+          {snapshot?.status?.sizeBytes != null && <span>{formatBytes(snapshot.status.sizeBytes)}</span>}
         </div>
       </div>
 
-      {error && <p className="mt-5 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">Database error: {error}</p>}
+      {error && <p className="m-5 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">Database error: {error}</p>}
 
-      <div className="mt-5 space-y-3">
-        {!snapshot && !error && <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Loading database...</p>}
-        {tableNames.map((name) => (
-          <details key={name} className="rounded-2xl border border-slate-100 bg-white p-4">
-            <summary className="cursor-pointer text-sm font-extrabold text-ink">
-              {formatTableName(name)} <span className="text-slate-400">({databaseTableCount(tables[name])})</span>
-            </summary>
-            <pre className="mt-4 max-h-96 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
-              {JSON.stringify(tables[name], null, 2)}
-            </pre>
-          </details>
-        ))}
-      </div>
+      {!snapshot && !error ? (
+        <div className="grid min-h-72 place-items-center p-8 text-center">
+          <div>
+            <RefreshCw className="mx-auto animate-spin text-teal-500" />
+            <p className="mt-3 text-sm font-bold text-slate-500">Loading database schema and records...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid min-h-[560px] lg:grid-cols-[250px_minmax(0,1fr)]">
+          <aside className="border-b border-slate-200 bg-slate-50/80 p-3 lg:border-b-0 lg:border-r">
+            <div className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Tables</div>
+            <div className="space-y-1">
+              {tableNames.map((name) => (
+                <button
+                  type="button"
+                  key={name}
+                  onClick={() => {
+                    setSelectedTable(name);
+                    setQuery("");
+                    setInspectedValue(null);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                    selectedTable === name ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white"
+                  }`}
+                >
+                  <Rows3 size={15} className="shrink-0" />
+                  <span className="min-w-0 flex-1 truncate text-xs font-extrabold">{formatTableName(name)}</span>
+                  <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-500">
+                    {databaseTableCount(tables[name])}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </aside>
+
+          <div className="min-w-0">
+            <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-ink">{formatTableName(selectedTable)}</h4>
+                  <span className="rounded-md bg-teal-50 px-2 py-1 text-[10px] font-extrabold uppercase text-teal-700">table</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-400">{filteredRows.length} of {rows.length} rows · {columns.length} columns</p>
+              </div>
+              <label className="relative block sm:w-72">
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs font-bold outline-none transition focus:border-teal-400 focus:bg-white"
+                  placeholder={`Search ${formatTableName(selectedTable)}...`}
+                />
+              </label>
+            </div>
+
+            <div className="max-h-[480px] overflow-auto">
+              {filteredRows.length ? (
+                <table className="w-full min-w-max border-collapse text-left text-xs">
+                  <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-400 shadow-[0_1px_0_#e2e8f0]">
+                    <tr>
+                      <th className="w-12 px-4 py-3 font-extrabold">#</th>
+                      {columns.map((column) => <th key={column} className="max-w-64 px-4 py-3 font-extrabold">{formatTableName(column)}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="border-b border-slate-100 transition hover:bg-teal-50/30">
+                        <td className="px-4 py-3 font-mono text-[10px] text-slate-400">{rowIndex + 1}</td>
+                        {columns.map((column) => (
+                          <td key={column} className="max-w-64 px-4 py-3 align-top text-slate-600">
+                            <DatabaseCell value={row[column]} onInspect={setInspectedValue} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="grid min-h-64 place-items-center p-8 text-center">
+                  <div>
+                    <Search className="mx-auto text-slate-300" />
+                    <p className="mt-3 text-sm font-extrabold text-slate-500">No matching records</p>
+                    <p className="mt-1 text-xs text-slate-400">Try a different search value.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {inspectedValue && (
+              <div className="border-t border-slate-200 bg-slate-950 p-4 text-slate-100">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 text-xs font-extrabold"><Braces size={14} className="text-teal-300" /> JSON inspector</span>
+                  <button type="button" onClick={() => setInspectedValue(null)} className="text-slate-400 transition hover:text-white"><X size={15} /></button>
+                </div>
+                <pre className="max-h-56 overflow-auto text-[11px] leading-5 text-slate-300">{JSON.stringify(inspectedValue, null, 2)}</pre>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DatabaseMetric({ label, value, tone = "slate" }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+      <p className="text-[10px] font-extrabold tracking-wider text-slate-500">{label}</p>
+      <p className={`mt-1 truncate text-sm font-extrabold ${tone === "emerald" ? "text-emerald-300" : "text-slate-200"}`}>{value}</p>
     </div>
   );
+}
+
+function DatabaseCell({ value, onInspect }) {
+  if (value == null) return <span className="font-mono text-[10px] italic text-slate-300">NULL</span>;
+  if (typeof value === "boolean") return <span className={`pill ${value ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{String(value)}</span>;
+  if (typeof value === "object") {
+    const itemCount = Array.isArray(value) ? value.length : Object.keys(value).length;
+    return (
+      <button type="button" onClick={() => onInspect(value)} className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2 py-1 font-mono text-[10px] font-bold text-violet-700 hover:bg-violet-100">
+        <Braces size={11} /> {Array.isArray(value) ? `Array(${itemCount})` : `Object(${itemCount})`}
+      </button>
+    );
+  }
+  if (typeof value === "number") return <span className="font-mono font-bold text-blue-600">{value}</span>;
+  return <span className="block max-w-64 truncate" title={String(value)}>{String(value)}</span>;
+}
+
+function databaseRows(value) {
+  if (Array.isArray(value)) return value.map((item) => (item && typeof item === "object" ? item : { value: item }));
+  if (value && typeof value === "object") return [value];
+  return value == null ? [] : [{ value }];
+}
+
+function databaseColumns(rows) {
+  return [...new Set(rows.flatMap((row) => Object.keys(row)))];
+}
+
+function formatDatabaseTime(value) {
+  if (!value) return "just now";
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function formatBytes(value) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatTableName(name) {

@@ -37,6 +37,11 @@ jobs:
           VITE_BASE_PATH: /SalmaAYA/
           VITE_STATIC_DEMO: "true"
 
+      - name: Verify pose assets
+        run: npm run test:pages
+        env:
+          VITE_BASE_PATH: /SalmaAYA/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

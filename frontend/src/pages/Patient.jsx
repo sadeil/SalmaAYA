@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Award,
   Bot,
+  CalendarDays,
   Camera,
   Check,
   CheckCircle2,
@@ -23,11 +24,13 @@ import {
   Gamepad2,
   Gift,
   HeartPulse,
+  History,
   Lock,
   Pause,
   Play,
   Rabbit,
   RotateCcw,
+  Square,
   Send,
   Sparkles,
   Star,
@@ -311,7 +314,7 @@ export function ExerciseSchedule() {
         </span>
         <div className="flex-1">
           <div className="mb-2 flex justify-between text-sm font-extrabold">
-            <span>{isArabic ? `ط§ظƒطھظ…ظ„ ${done} ظ…ظ† ${items.length} طھظ…ط§ط±ظٹظ†` : `${done} of ${items.length} exercises complete`}</span>
+            <span>{isArabic ? `اكتمل ${done} من ${items.length} تمارين` : `${done} of ${items.length} exercises complete`}</span>
             <span>{Math.round((done / items.length) * 100)}%</span>
           </div>
           <Progress value={(done / items.length) * 100} />
@@ -755,17 +758,26 @@ export function AIChat() {
   const [profile, setProfile] = useState(null);
   const [intake, setIntake] = useState({});
   const [draftPlan, setDraftPlan] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [aiStatus, setAiStatus] = useState({ enabled: false, provider: "Local fallback" });
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [error, setError] = useState("");
   const scrollRef = useRef(null);
+  const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId) ?? null;
+  const displayedMessages = selectedConversation?.messages ?? messages;
   const visibleIntake = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       if (messages[index]?.intake) return { ...intake, ...messages[index].intake };
     }
     return intake;
   }, [intake, messages]);
+  const quickReplies = useMemo(
+    () => getChatQuickReplies(visibleIntake, draftPlan),
+    [visibleIntake, draftPlan],
+  );
 
   useEffect(() => {
     let active = true;
@@ -778,6 +790,7 @@ export function AIChat() {
           setProfile(payload.profile ?? null);
           setIntake(payload.intake ?? {});
           setDraftPlan(payload.draftPlan ?? null);
+          setConversations(payload.conversations ?? []);
           setAiStatus(payload.ai ?? { enabled: false, provider: "Local fallback" });
         }
       })
@@ -787,7 +800,7 @@ export function AIChat() {
     };
   }, []);
 
-  // Auto-scroll to the latest message whenever the list changes â€” but only
+  // Auto-scroll to the latest message whenever the list changes — but only
   // if the user was already near the bottom (so we don't yank them away
   // from scrollback they're reading).
   useEffect(() => {
@@ -821,14 +834,39 @@ export function AIChat() {
       setSending(false);
     }
   };
+
+  const endCurrentConversation = async () => {
+    if (!messages.some((message) => message.from === "user")) return;
+    setError("");
+    setEnding(true);
+    try {
+      const payload = await api.endPatientConversation();
+      setConversations(payload.conversations ?? []);
+      setMessages(payload.messages ?? []);
+      setIntake(payload.intake ?? {});
+      setDraftPlan(null);
+      setSelectedConversationId(null);
+    } catch (apiError) {
+      setError(apiError.message);
+    } finally {
+      setEnding(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
-        eyebrow="AI health assistant"
-        title="Let's understand how you feel"
-        description="Your answers help prepare a suggested plan for doctor review."
+        eyebrow="المساعدة الصحية الذكية"
+        title="دعينا نفهم حالتك اليوم"
+        description="تساعد إجاباتك في إعداد خطة تمارين مقترحة لمراجعتها قبل اعتمادها."
       />
-      <div className="grid gap-5 xl:grid-cols-[1fr_.38fr]">
+      <div className="grid items-start gap-5 xl:grid-cols-[280px_minmax(0,1fr)_340px]">
+        <ChatHistory
+          conversations={conversations}
+          selectedId={selectedConversationId}
+          onSelect={setSelectedConversationId}
+          onNew={() => setSelectedConversationId(null)}
+        />
         <div className="card flex min-h-[650px] flex-col p-0 overflow-hidden">
           <div className="flex items-center gap-3 border-b p-5">
             <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-100 to-teal-50 text-teal-600 shadow-inner">
@@ -838,15 +876,18 @@ export function AIChat() {
             <div>
               <p className="text-sm font-extrabold">{"\u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0627\u0644\u0635\u062D\u064A"}</p>
               <p className="flex items-center gap-1 text-xs text-teal-600">
-                <span className="h-2 w-2 rounded-full bg-teal-500 anim-pulse-glow" /> Online
+                <span className="h-2 w-2 rounded-full bg-teal-500 anim-pulse-glow" /> متصل الآن
               </p>
             </div>
-            <span className="pill ml-auto bg-violet-50 text-violet-700">
-              <Sparkles size={13} /> {aiStatus.enabled ? "OpenRouter active" : "Local AI fallback"}
-            </span>
+            <div className="ml-auto flex items-center gap-2">
+              {selectedConversation && <span className="pill bg-slate-100 text-slate-600">محادثة منتهية</span>}
+              <span className="pill bg-violet-50 text-violet-700">
+                <Sparkles size={13} /> {aiStatus.enabled ? "الذكاء الاصطناعي مفعّل" : "الوضع المحلي"}
+              </span>
+            </div>
           </div>
           <div ref={scrollRef} className="no-scrollbar flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-slate-50/60 to-white p-5">
-            {messages.map((m, i) => (
+            {displayedMessages.map((m, i) => (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -876,43 +917,77 @@ export function AIChat() {
           </div>
           <div className="border-t bg-white p-4">
             {error && <p className="mb-3 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</p>}
-            <div className="flex gap-2">
-              <input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
-                className="field"
-                placeholder={draftPlan ? "\u0627\u0643\u062A\u0628\u064A \u0645\u0648\u0627\u0641\u0642\u0629 \u0644\u0644\u0625\u0636\u0627\u0641\u0629 \u0623\u0648 \u062A\u063A\u064A\u064A\u0631 \u0644\u0644\u062A\u0639\u062F\u064A\u0644..." : "\u0627\u0643\u062A\u0628\u064A \u0625\u062C\u0627\u0628\u062A\u0643..."}
-              />
-              <button disabled={sending || !text.trim()} onClick={send} className="btn-primary px-4 disabled:cursor-not-allowed disabled:opacity-60">
-                <Send size={18} />
+            {selectedConversation ? (
+              <button className="btn-primary w-full" onClick={() => setSelectedConversationId(null)}>
+                العودة إلى المحادثة الحالية
               </button>
-            </div>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-              Press <span className="kbd">Enter</span> to send
-            </p>
+            ) : (
+              <>
+                {quickReplies.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2" dir="rtl">
+                    {quickReplies.map((reply) => (
+                      <button
+                        type="button"
+                        key={reply}
+                        disabled={sending}
+                        onClick={() => send(reply)}
+                        className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 transition hover:border-teal-400 hover:bg-teal-100 disabled:opacity-50"
+                      >
+                        {reply}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && send()}
+                    className="field"
+                    placeholder={draftPlan ? "\u0627\u0643\u062A\u0628\u064A \u0645\u0648\u0627\u0641\u0642\u0629 \u0644\u0644\u0625\u0636\u0627\u0641\u0629 \u0623\u0648 \u062A\u063A\u064A\u064A\u0631 \u0644\u0644\u062A\u0639\u062F\u064A\u0644..." : "\u0627\u0643\u062A\u0628\u064A \u0625\u062C\u0627\u0628\u062A\u0643..."}
+                  />
+                  <button disabled={sending || !text.trim()} onClick={send} className="btn-primary px-4 disabled:cursor-not-allowed disabled:opacity-60">
+                    <Send size={18} />
+                  </button>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                    اضغطي <span className="kbd">Enter</span> للإرسال
+                  </p>
+                  <button
+                    type="button"
+                    onClick={endCurrentConversation}
+                    disabled={ending || !messages.some((message) => message.from === "user")}
+                    className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-xs font-extrabold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Square size={13} fill="currentColor" />
+                    {ending ? "جارٍ الحفظ..." : "إنهاء المحادثة"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="space-y-5">
           <div className="card">
             <span className="pill bg-teal-50 text-teal-700">
-              <CheckCircle2 size={14} /> Intake summary
+              <CheckCircle2 size={14} /> ملخص الإجابات
             </span>
-            <h3 className="mt-5 text-lg font-extrabold">Suggested care path</h3>
+            <h3 className="mt-5 text-lg font-extrabold">الخطة المقترحة</h3>
             <div className="mt-5 space-y-4 text-sm">
               {[
-                ["Profile", profile?.problem ?? "Lower back pain"],
-                ["Problem", visibleIntake.currentProblem ?? "Not answered"],
-                ["Location", visibleIntake.location ?? "Not answered"],
-                ["Pain level", visibleIntake.painLevel != null ? `${visibleIntake.painLevel} \u0645\u0646 10` : "Not answered"],
-                ["Symptoms", visibleIntake.symptoms ?? "Not answered"],
-                ["Duration", visibleIntake.duration ?? "Not answered"],
-                ["Daily time", visibleIntake.dailyTimeMinutes ? `${visibleIntake.dailyTimeMinutes} minutes` : "Not answered"],
-                ["Goal", visibleIntake.goal ?? "Not answered"],
-                ["Level", visibleIntake.difficulty ?? "Not answered"],
-                ["AI mode", aiStatus.provider ?? "Local fallback"],
-                ["Draft plan", draftPlan?.title ?? "Not approved yet"],
-                ["Exercises", draftPlan ? `${draftPlan.exercises.length} pending` : "Ask in chat"],
+                ["الملف", profile?.problem ?? "ألم أسفل الظهر"],
+                ["المشكلة", visibleIntake.currentProblem ?? "لم تتم الإجابة"],
+                ["المكان", visibleIntake.location ?? "لم تتم الإجابة"],
+                ["درجة الألم", visibleIntake.painLevel != null ? `${visibleIntake.painLevel} \u0645\u0646 10` : "لم تتم الإجابة"],
+                ["الأعراض", visibleIntake.symptoms ?? "لم تتم الإجابة"],
+                ["المدة", visibleIntake.duration ?? "لم تتم الإجابة"],
+                ["الوقت اليومي", visibleIntake.dailyTimeMinutes ? `${visibleIntake.dailyTimeMinutes} دقيقة` : "لم تتم الإجابة"],
+                ["الهدف", visibleIntake.goal ?? "لم تتم الإجابة"],
+                ["المستوى", visibleIntake.difficulty ?? "لم تتم الإجابة"],
+                ["وضع المساعد", aiStatus.enabled ? "متصل" : "محلي"],
+                ["مسودة الخطة", draftPlan?.title ?? "لا توجد مسودة"],
+                ["التمارين", draftPlan ? `${draftPlan.exercises.length} بانتظار الموافقة` : "أكملي المحادثة"],
               ].map(([a, b]) => (
                 <div
                   key={a}
@@ -930,21 +1005,114 @@ export function AIChat() {
               disabled={!draftPlan}
               onClick={() => send("approve")}
             >
-              {draftPlan ? "Approve in chat" : "No draft yet"}
+              {draftPlan ? "الموافقة على الخطة" : "لا توجد مسودة بعد"}
             </button>
           </div>
           <div className="card border-amber-200 bg-amber-50">
             <p className="flex gap-2 text-sm font-extrabold text-amber-800">
-              <ShieldCheckIcon /> Safety note
+              <ShieldCheckIcon /> تنبيه للسلامة
             </p>
             <p className="mt-2 text-xs leading-5 text-amber-700">
-              This platform provides general therapeutic exercise guidance and
-              does not replace consultation with a doctor or physical therapist.
+              يقدم هذا التطبيق إرشادات عامة للتمارين، ولا يغني عن استشارة الطبيب
+              أو أخصائي العلاج الطبيعي.
             </p>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+function getChatQuickReplies(intake, draftPlan) {
+  if (draftPlan) return ["موافقة", "تغيير"];
+  if (!intake.currentProblem) return ["الرأس", "الرقبة", "الكتف", "الظهر", "الركبة"];
+  if (!intake.location) {
+    if (intake.currentProblem === "head") return ["الجبهة", "خلف الرأس", "أعلى الرأس", "جهة واحدة", "حول العينين"];
+    if (intake.currentProblem === "neck") return ["خلف الرقبة", "الجانب الأيمن", "الجانب الأيسر", "يمتد إلى الكتف"];
+    if (intake.currentProblem === "shoulder") return ["الكتف الأيمن", "الكتف الأيسر", "أمام الكتف", "خلف الكتف"];
+    if (intake.currentProblem === "knee") return ["أمام الركبة", "خلف الركبة", "داخل الركبة", "خارج الركبة"];
+    return ["أعلى الظهر", "منتصف الظهر", "أسفل الظهر", "جهة واحدة"];
+  }
+  if (intake.painLevel == null) return ["2", "4", "6", "8"];
+  if (!intake.symptoms) return ["لا يوجد", "تنميل أو وخز", "ضعف", "تورم", "دوخة"];
+  if (!intake.duration) return ["منذ اليوم", "منذ أسبوع", "منذ شهر", "أكثر من 3 أشهر"];
+  if (!intake.dailyTimeMinutes) return ["10", "15", "20", "30"];
+  if (!intake.goal) return ["تخفيف الألم", "تحسين الحركة", "زيادة القوة", "تحسين الوضعية"];
+  if (!intake.difficulty) return ["سهل", "متوسط", "متقدم"];
+  return [];
+}
+
+function ChatHistory({ conversations, selectedId, onSelect, onNew }) {
+  const formatDate = (value) => {
+    if (!value) return "";
+    return new Intl.DateTimeFormat("ar-PS", {
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(value));
+  };
+
+  return (
+    <aside className="card p-4" dir="rtl">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <span className="pill bg-teal-50 text-teal-700">
+            <History size={14} /> سجل المحادثات
+          </span>
+          <p className="mt-2 text-xs text-slate-400">{conversations.length} محادثة محفوظة</p>
+        </div>
+        <button
+          type="button"
+          onClick={onNew}
+          className="grid h-10 w-10 place-items-center rounded-xl bg-ink text-white transition hover:bg-teal-800"
+          title="المحادثة الحالية"
+          aria-label="المحادثة الحالية"
+        >
+          <Bot size={17} />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={onNew}
+        className={`mt-4 w-full rounded-2xl border p-3 text-right transition ${
+          selectedId == null ? "border-teal-300 bg-teal-50" : "border-slate-100 hover:border-teal-200"
+        }`}
+      >
+        <p className="text-sm font-extrabold text-ink">المحادثة الحالية</p>
+        <p className="mt-1 text-xs text-emerald-600">نشطة الآن</p>
+      </button>
+
+      <div className="mt-3 max-h-[505px] space-y-2 overflow-y-auto">
+        {conversations.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center">
+            <History className="mx-auto text-slate-300" size={24} />
+            <p className="mt-3 text-sm font-bold text-slate-500">لا توجد محادثات منتهية</p>
+            <p className="mt-1 text-xs leading-5 text-slate-400">ستظهر هنا بعد الضغط على إنهاء المحادثة.</p>
+          </div>
+        ) : conversations.map((conversation) => (
+          <button
+            type="button"
+            key={conversation.id}
+            onClick={() => onSelect(conversation.id)}
+            className={`w-full rounded-2xl border p-3 text-right transition ${
+              selectedId === conversation.id
+                ? "border-teal-300 bg-teal-50"
+                : "border-slate-100 bg-white hover:border-teal-200 hover:bg-slate-50"
+            }`}
+          >
+            <p className="truncate text-sm font-extrabold text-ink">{conversation.title}</p>
+            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays size={12} /> {formatDate(conversation.endedAt)}
+              </span>
+              <span>{conversation.messageCount} رسائل</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -956,14 +1124,14 @@ function ChatPlanPreview({ plan, onApprove }) {
       </p>
       <h4 className="mt-1 font-extrabold">{plan.title}</h4>
       <p className="mt-1 text-xs text-slate-500">
-        {"\u0627\u0644\u062A\u0631\u0643\u064A\u0632"}: {plan.focus} آ· {"\u0627\u0644\u0623\u0644\u0645"} {plan.painLevel}/10 آ· {plan.dailyTimeMinutes} min/day
+        {"\u0627\u0644\u062A\u0631\u0643\u064A\u0632"}: {plan.focus} · {"\u0627\u0644\u0623\u0644\u0645"} {plan.painLevel}/10 · {plan.dailyTimeMinutes} دقيقة يوميًا
       </p>
       <div className="mt-3 space-y-2">
         {plan.exercises.map((exercise, index) => (
           <div key={`${exercise.name}-${index}`} className="rounded-xl bg-white/80 p-3">
             <p className="text-sm font-extrabold">{index + 1}. {exercise.name}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {exercise.area} آ· {exercise.duration} آ· {exercise.sets} set آ· {exercise.reps} reps
+              {exercise.area} · {exercise.duration} · {exercise.sets} جولة · {exercise.reps} تكرارات
             </p>
           </div>
         ))}

@@ -56,6 +56,12 @@ async function findFreePort() {
 try {
   await waitForServer();
 
+  const headFollowUp = await post("/patient/messages", { text: "الرأس" });
+  if (!headFollowUp.messages?.[0]?.text?.includes("الجبهة")) {
+    throw new Error("Head complaint did not receive a tailored location question.");
+  }
+  await post("/patient/messages", { text: "من جديد" });
+
   await post("/patient/sessions", {
     exerciseId: "neckStretch",
     exerciseName: "Neck mobility",
@@ -67,11 +73,34 @@ try {
     mistakes: {},
   });
 
-  await post("/patient/messages", { text: "my neck is stiff today" });
-  await post("/patient/messages", { text: "3 out of 10 and I have 15 minutes" });
+  for (const text of [
+    "my neck is stiff today",
+    "left side of neck",
+    "3",
+    "none",
+    "one week",
+    "15",
+    "pain relief",
+    "easy",
+  ]) {
+    await post("/patient/messages", { text });
+  }
   await post("/patient/messages", { text: "approve" });
-  await post("/patient/messages", { text: "عندي ألم في الرقبة ٤/10 وعندي 10 دقائق" });
+  await post("/patient/messages", { text: "من جديد" });
+  for (const text of [
+    "ألم في الرقبة",
+    "الجهة اليمنى من الرقبة",
+    "4",
+    "لا يوجد",
+    "منذ أسبوع",
+    "10",
+    "تخفيف الألم",
+    "سهل",
+  ]) {
+    await post("/patient/messages", { text });
+  }
   await post("/patient/messages", { text: "موافق" });
+  await post("/patient/conversations/end", {});
 
   const raw = await readFile(testDatabasePath, "utf8");
   const db = JSON.parse(raw);
@@ -79,16 +108,23 @@ try {
   if (!Array.isArray(db.formCheckSessions) || db.formCheckSessions.length < 1) {
     throw new Error("Database did not persist form check sessions.");
   }
-  if (!Array.isArray(db.messages) || !db.messages.some((message) => message.text?.includes("Approved"))) {
+  if (!Array.isArray(db.chatConversations) || db.chatConversations.length !== 1) {
+    throw new Error("Database did not persist the completed conversation.");
+  }
+  const archivedMessages = db.chatConversations[0].messages;
+  if (!Array.isArray(archivedMessages) || !archivedMessages.some((message) => message.text?.includes("تمت الموافقة"))) {
     throw new Error("Database did not persist chatbot messages.");
   }
-  if (!db.messages.some((message) => message.text === "موافق")) {
+  if (!archivedMessages.some((message) => message.text === "موافق")) {
     throw new Error("Database did not persist Arabic chatbot approval.");
   }
-  if (!Array.isArray(db.exercises) || !db.exercises.some((exercise) => exercise.name === "Neck mobility")) {
+  if (db.messages.length !== 1 || db.messages[0].from !== "ai") {
+    throw new Error("Database did not reset the active conversation after ending it.");
+  }
+  if (!Array.isArray(db.exercises) || !db.exercises.some((exercise) => exercise.name === "تمرين الرقبة")) {
     throw new Error("Database did not persist approved chat exercises.");
   }
-  const neckMobilityCount = db.exercises.filter((exercise) => exercise.name === "Neck mobility").length;
+  const neckMobilityCount = db.exercises.filter((exercise) => exercise.name === "تمرين الرقبة").length;
   if (neckMobilityCount < 2) {
     throw new Error("Database did not save the Arabic neck plan exercises.");
   }

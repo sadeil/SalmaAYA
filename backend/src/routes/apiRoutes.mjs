@@ -6,6 +6,7 @@ import { healthCheck } from "../controllers/healthController.mjs";
 import {
   createMessage,
   dashboard as patientDashboard,
+  endConversation,
   exerciseList,
   messageList,
 } from "../controllers/patientController.mjs";
@@ -25,6 +26,7 @@ export async function handleApi(request, response, url) {
     if (route === "GET /patient/exercises") return exerciseList(request, response);
     if (route === "GET /patient/messages") return messageList(request, response);
     if (route === "POST /patient/messages") return createMessage(request, response);
+    if (route === "POST /patient/conversations/end") return endConversation(request, response);
     if (route === "POST /patient/sessions") return createSession(request, response);
     if (route === "GET /patient/sessions") return listSessions(request, response);
     if (route === "GET /doctor/patients") return patientList(request, response);

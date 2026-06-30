@@ -42,6 +42,20 @@ INSERT INTO messages (patient_user_id, sender_role, body) VALUES
 INSERT INTO chatbot_care_state (patient_user_id, current_problem, pain_level, daily_time_minutes, draft_plan_json) VALUES
   ('patient_salma', NULL, NULL, NULL, NULL);
 
+INSERT INTO chat_conversations (
+  id, patient_user_id, title, status, messages_json, intake_json, message_count, started_at, ended_at
+) VALUES (
+  1,
+  'patient_salma',
+  'محادثة حول ألم أسفل الظهر',
+  'completed',
+  '[{"from":"user","text":"أشعر بشد في أسفل ظهري بعد الجلوس في العمل."},{"from":"ai","text":"شكرًا لك. تم تسجيل الأعراض وإعداد اقتراح مناسب."}]',
+  '{"currentProblem":"lower back","location":"أسفل الظهر","painLevel":4}',
+  2,
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
 INSERT INTO form_check_sessions (
   patient_user_id,
   exercise_id,

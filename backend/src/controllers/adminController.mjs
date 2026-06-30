@@ -2,6 +2,7 @@ import { sendJson } from "../utils/http.mjs";
 import { databaseStatus } from "../config/database.mjs";
 import {
   chatCareState,
+  chatConversations,
   exercises,
   formCheckSessions,
   messages,
@@ -34,6 +35,7 @@ export function databaseSnapshot(_request, response) {
     messages,
     patientProfile,
     chatCareState,
+    chatConversations,
     formCheckSessions,
   };
 
@@ -47,6 +49,7 @@ export function databaseSnapshot(_request, response) {
       formCheckSessions: formCheckSessions.length,
       patientProfile: patientProfile ? 1 : 0,
       chatCareState: chatCareState ? 1 : 0,
+      chatConversations: chatConversations.length,
     },
     tables,
   });

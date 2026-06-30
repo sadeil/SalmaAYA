@@ -85,6 +85,7 @@ export const api = {
   patients: () => request("/doctor/patients"),
   patientMessages: () => request("/patient/messages"),
   sendPatientMessage: (text) => request("/patient/messages", { method: "POST", body: JSON.stringify({ text }) }),
+  endPatientConversation: () => request("/patient/conversations/end", { method: "POST" }),
   saveSession: (session) => request("/patient/sessions", { method: "POST", body: JSON.stringify(session) }),
   sessions: () => request("/patient/sessions"),
   approvePlan: (patientId) => request(`/doctor/patients/${patientId}/plan`, { method: "PATCH" }),

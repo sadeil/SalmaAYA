@@ -11,6 +11,7 @@ const state = {
   exercises: clone(seedExercises),
   messages: clone(seedMessages),
   patients: clone(seedPatients),
+  conversations: [],
   sessions: [],
   patientProfile: {
     id: "patient_salma",
@@ -64,6 +65,21 @@ const intakeQuestions = {
 
 const intakeOrder = Object.keys(intakeQuestions);
 
+function questionFor(field) {
+  const focus = String(state.chatCareState.intake.currentProblem || "");
+  if (field === "location") {
+    if (focus === "head") return "أين تشعرين بالألم في الرأس تحديدًا: الجبهة، خلف الرأس، أعلى الرأس، جهة واحدة، أم حول العينين؟";
+    if (focus === "neck") return "أين الألم في الرقبة تحديدًا: الخلف، أحد الجانبين، أم يمتد إلى الكتف أو الذراع؟";
+    if (focus === "shoulder") return "أي كتف يؤلمك؟ وهل الألم في الأمام، الأعلى، الخلف، أم يمتد إلى الذراع؟";
+    if (focus === "knee") return "أي ركبة تؤلمك؟ وهل الألم أمام الركبة، خلفها، داخلها، أم خارجها؟";
+    if (focus.includes("back")) return "أين الألم في الظهر تحديدًا: أعلى الظهر، منتصفه، أم أسفل الظهر؟ وهل هو في المنتصف أم جهة واحدة؟";
+  }
+  if (field === "symptoms" && focus === "head") {
+    return "هل يصاحب ألم الرأس غثيان، حساسية للضوء، تشوش في النظر، دوخة، حرارة، تنميل أو ضعف؟";
+  }
+  return intakeQuestions[field];
+}
+
 function nextMissingField() {
   return intakeOrder.find((field) => state.chatCareState.intake[field] == null || state.chatCareState.intake[field] === "");
 }
@@ -75,13 +91,13 @@ function intakeSnapshot() {
 function invalidAnswerMessage(field, text) {
   const normalized = normalizeAnswer(text);
   if (!normalized || /^(hi|hey|hello|هاي|مرحبا|اهلا|أهلا|سلام)$/.test(normalized)) {
-    return intakeQuestions[field];
+    return questionFor(field);
   }
   if (field === "currentProblem" && !extractProblem(normalized)) {
     return "\u0644\u0645 \u0623\u0641\u0647\u0645 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0628\u0648\u0636\u0648\u062D. \u0627\u0643\u062A\u0628\u064A \u0645\u062B\u0644\u0627: \u0623\u0644\u0645 \u0641\u064A \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629.";
   }
   if (field === "location" && (/^(no|none|لا|لا اشعر|لا يوجد)$/.test(normalized) || normalized.length < 3)) {
-    return "\u0627\u062D\u062A\u0627\u062C \u0627\u0644\u0645\u0643\u0627\u0646 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F. \u0645\u062B\u0644\u0627: \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631 \u0623\u0648 \u0627\u0644\u0643\u062A\u0641 \u0627\u0644\u0623\u064A\u0645\u0646.";
+    return `أحتاج تحديد المكان بشكل أدق.\n\n${questionFor("location")}`;
   }
   if (field === "painLevel" && extractPainLevel(normalized) == null) {
     return "\u0627\u0643\u062A\u0628\u064A \u0631\u0642\u0645\u0627 \u0645\u0646 0 \u0625\u0644\u0649 10 \u0644\u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645. \u0645\u062B\u0644\u0627: 4.";
@@ -179,6 +195,7 @@ function planPreviewText(plan) {
 }
 
 function extractProblem(text) {
+  if (text.includes("head") || text.includes("\u0631\u0623\u0633") || text.includes("\u0631\u0627\u0633") || text.includes("\u0635\u062F\u0627\u0639")) return "head";
   if (text.includes("neck") || text.includes("\u0631\u0642\u0628\u0629")) return "neck";
   if (text.includes("shoulder") || text.includes("\u0643\u062A\u0641")) return "shoulder";
   if (text.includes("lower back") || text.includes("\u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631") || text.includes("\u0627\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631")) return "lower back";
@@ -293,7 +310,37 @@ export async function staticRequest(path, options = {}) {
       profile: state.patientProfile,
       intake: state.chatCareState.intake,
       draftPlan: state.chatCareState.draftPlan,
+      conversations: state.conversations,
       ai: { enabled: false, provider: "Static demo", model: "browser-demo" },
+    });
+  }
+  if (method === "POST" && path === "/patient/conversations/end") {
+    if (!state.messages.some((message) => message.from === "user")) {
+      throw new Error("لا توجد محادثة لحفظها.");
+    }
+    const endedAt = new Date().toISOString();
+    const conversation = {
+      id: state.conversations.length + 1,
+      title: state.chatCareState.intake.location
+        ? `محادثة حول ${state.chatCareState.intake.location}`
+        : "محادثة صحية",
+      status: "completed",
+      startedAt: endedAt,
+      endedAt,
+      messageCount: state.messages.length,
+      messages: clone(state.messages),
+      intake: intakeSnapshot(),
+    };
+    state.conversations.unshift(conversation);
+    state.messages = [{ from: "ai", text: intakeQuestions.currentProblem, createdAt: endedAt }];
+    state.chatCareState.intake = Object.fromEntries(intakeOrder.map((field) => [field, null]));
+    state.chatCareState.draftPlan = null;
+    return response({
+      conversation,
+      conversations: state.conversations,
+      messages: state.messages,
+      intake: state.chatCareState.intake,
+      draftPlan: null,
     });
   }
   if (method === "POST" && path === "/patient/messages") {
@@ -331,7 +378,7 @@ export async function staticRequest(path, options = {}) {
         updateIntakeFromAnswer(expectedField, outgoing.text);
         const missingField = nextMissingField();
         if (missingField) {
-          assistant = { from: "ai", text: intakeQuestions[missingField], intake: intakeSnapshot() };
+          assistant = { from: "ai", text: questionFor(missingField), intake: intakeSnapshot() };
         } else {
           const plan = createDraftPlan();
           state.chatCareState.draftPlan = plan;

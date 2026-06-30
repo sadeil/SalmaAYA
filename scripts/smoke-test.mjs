@@ -116,20 +116,28 @@ for (let index = 0; index < await startButtons.count(); index += 1) {
 }
 
 await page.goto(`${baseURL}/patient/chat`, { waitUntil: "networkidle" });
-const chatInput = page.locator("input[placeholder*='current problem'], input[placeholder*='Describe how you feel']").first();
-await chatInput.fill("My back feels better today");
-await chatInput.press("Enter");
+const chatInput = page.locator("input.field").first();
+const chatAnswers = [
+  "My back feels better today",
+  "lower back",
+  "3",
+  "none",
+  "one week",
+  "15",
+  "pain relief",
+  "easy",
+];
+for (const answer of chatAnswers) {
+  await chatInput.fill(answer);
+  await chatInput.press("Enter");
+  await page.waitForFunction(() => !document.querySelector(".typing-dots"), null, { timeout: 8000 });
+}
 if (!(await page.getByText("My back feels better today").count())) errors.push("AI chat send failed");
-await page.waitForSelector("text=/pain|discomfort/i", { timeout: 5000 }).catch(() =>
-  errors.push("AI chat did not ask for missing pain level"),
-);
-await chatInput.fill("3 out of 10 and I have 15 minutes");
-await chatInput.press("Enter");
-await page.waitForSelector("text=Plan preview", { timeout: 8000 }).catch(() =>
+await page.waitForSelector("text=معاينة الخطة", { timeout: 8000 }).catch(() =>
   errors.push("AI chat did not render a plan preview"),
 );
-await page.getByRole("button", { name: "Approve and add to Exercises" }).click();
-await page.waitForSelector("text=Approved. I added", { timeout: 8000 }).catch(() =>
+await page.getByRole("button", { name: "موافقة وإضافة إلى التمارين" }).click();
+await page.waitForSelector("text=تمت الموافقة", { timeout: 8000 }).catch(() =>
   errors.push("AI chat did not confirm approved exercises"),
 );
 
@@ -137,7 +145,7 @@ const chatDatabaseResponse = await page.request.get(`${baseURL}/api/admin/databa
 if (!chatDatabaseResponse.ok()) errors.push(`chat database verification HTTP ${chatDatabaseResponse.status()}`);
 else {
   const snapshot = await chatDatabaseResponse.json();
-  if (!snapshot.tables?.messages?.some((message) => message.text?.includes("Approved. I added"))) {
+  if (!snapshot.tables?.messages?.some((message) => message.text?.includes("تمت الموافقة"))) {
     errors.push("approved chatbot message was not saved to database");
   }
   if (!Array.isArray(snapshot.tables?.exercises) || snapshot.tables.exercises.length < 8) {
@@ -146,6 +154,20 @@ else {
   if (snapshot.tables?.chatCareState?.draftPlan !== null) {
     errors.push("chat draft plan was not cleared after approval");
   }
+}
+
+const [endConversationResponse] = await Promise.all([
+  page.waitForResponse((response) => response.url().includes("/api/patient/conversations/end")),
+  page.getByRole("button", { name: "إنهاء المحادثة" }).click(),
+]);
+if (!endConversationResponse.ok()) {
+  errors.push(`end conversation HTTP ${endConversationResponse.status()}`);
+}
+await page.waitForSelector("text=محادثة محفوظة", { timeout: 8000 }).catch(() =>
+  errors.push("completed conversation did not appear in chat history"),
+);
+if (!(await page.getByText("المحادثة الحالية").count())) {
+  errors.push("chat did not reset to a new active conversation");
 }
 
 await page.goto(`${baseURL}/admin`, { waitUntil: "networkidle" });

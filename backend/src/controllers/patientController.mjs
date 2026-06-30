@@ -1,7 +1,9 @@
 ﻿import {
   chatCareState,
+  chatConversations,
   exercises,
   messages,
+  nextChatConversationId,
   nextExercisePlanId,
   patientProfile,
   progressData,
@@ -22,12 +24,62 @@ export function exerciseList(_request, response) {
 }
 
 export function messageList(_request, response) {
+  const missingField = nextMissingField();
+  const lastMessage = messages.at(-1);
+  if (
+    missingField
+    && lastMessage?.from === "ai"
+    && lastMessage.text === intakeQuestions[missingField]
+  ) {
+    lastMessage.text = questionFor(missingField);
+    saveAppStore();
+  }
   return sendJson(response, 200, {
     messages,
     profile: patientProfile,
     intake: chatCareState.intake,
     draftPlan: chatCareState.draftPlan,
+    conversations: chatConversations,
     ai: aiProviderStatus(),
+  });
+}
+
+export function endConversation(_request, response) {
+  if (!messages.some((message) => message.from === "user")) {
+    return sendJson(response, 400, { code: "EMPTY_CONVERSATION", message: "لا توجد محادثة لحفظها." });
+  }
+
+  const endedAt = new Date().toISOString();
+  const problem = chatCareState.intake.currentProblem;
+  const location = chatCareState.intake.location;
+  const firstUserMessage = messages.find((message) => message.from === "user")?.text;
+  const conversation = {
+    id: nextChatConversationId(),
+    title: location
+      ? `محادثة حول ${location}`
+      : problem
+        ? `محادثة حول ${arabicFocus(problem)}`
+        : firstUserMessage?.slice(0, 48) || "محادثة صحية",
+    status: "completed",
+    startedAt: messages[0]?.createdAt ?? endedAt,
+    endedAt,
+    messageCount: messages.length,
+    messages: JSON.parse(JSON.stringify(messages)),
+    intake: intakeSnapshot(),
+  };
+
+  chatConversations.unshift(conversation);
+  messages.splice(0, messages.length, { from: "ai", text: intakeQuestions.currentProblem, createdAt: endedAt });
+  resetIntake();
+  chatCareState.draftPlan = null;
+  saveAppStore();
+
+  return sendJson(response, 201, {
+    conversation,
+    conversations: chatConversations,
+    messages,
+    intake: intakeSnapshot(),
+    draftPlan: null,
   });
 }
 
@@ -52,7 +104,7 @@ export async function createMessage(request, response) {
 }
 
 const intakeQuestions = {
-  currentProblem: "\u0645\u0631\u062D\u0628\u0627 \u0633\u0644\u0645\u0649. \u0633\u0623\u0637\u0631\u062D \u0639\u0644\u064A\u0643 \u0623\u0633\u0626\u0644\u0629 \u062B\u0645 \u0623\u062C\u0647\u0632 \u062E\u0637\u0629 \u062A\u0645\u0627\u0631\u064A\u0646.\n\n\u0645\u0627 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0627\u0644\u064A\u0648\u0645\u061F \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629\u061F",
+  currentProblem: "مرحبًا سلمى. سأطرح أسئلة قصيرة تتغيّر حسب إجاباتك لأفهم الحالة بدقة قبل اقتراح أي تمارين.\n\nما المنطقة التي تزعجك اليوم: الرأس، الرقبة، الكتف، الظهر، أم الركبة؟",
   location: "\u0623\u064A\u0646 \u062A\u0634\u0639\u0631\u064A\u0646 \u0628\u0627\u0644\u0623\u0644\u0645 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F\u061F",
   painLevel: "\u0645\u0627 \u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645 \u0645\u0646 0 \u0625\u0644\u0649 10\u061F",
   symptoms: "\u0647\u0644 \u064A\u0648\u062C\u062F \u062A\u0646\u0645\u064A\u0644\u060C \u0648\u062E\u0632\u060C \u0636\u0639\u0641\u060C \u062A\u0648\u0631\u0645\u060C \u0623\u0648 \u0623\u0644\u0645 \u062D\u0627\u062F\u061F \u0625\u0630\u0627 \u0644\u0627 \u064A\u0648\u062C\u062F\u060C \u0627\u0643\u062A\u0628\u064A: \u0644\u0627 \u064A\u0648\u062C\u062F.",
@@ -63,6 +115,53 @@ const intakeQuestions = {
 };
 
 const intakeOrder = Object.keys(intakeQuestions);
+
+function questionFor(field) {
+  const focus = String(chatCareState.intake.currentProblem || "");
+  if (field === "location") {
+    if (focus === "head") return "أين تشعرين بالألم في الرأس تحديدًا: الجبهة، خلف الرأس، أعلى الرأس، جهة واحدة، أم حول العينين؟";
+    if (focus === "neck") return "أين الألم في الرقبة تحديدًا: الخلف، أحد الجانبين، أم يمتد إلى الكتف أو الذراع؟";
+    if (focus === "shoulder") return "أي كتف يؤلمك؟ وهل الألم في الأمام، الأعلى، الخلف، أم يمتد إلى الذراع؟";
+    if (focus === "knee") return "أي ركبة تؤلمك؟ وهل الألم أمام الركبة، خلفها، داخلها، أم خارجها؟";
+    if (focus.includes("back")) return "أين الألم في الظهر تحديدًا: أعلى الظهر، منتصفه، أم أسفل الظهر؟ وهل هو في المنتصف أم جهة واحدة؟";
+  }
+  if (field === "symptoms") {
+    if (focus === "head") return "هل يصاحب ألم الرأس غثيان، حساسية للضوء، تشوش في النظر، دوخة، حرارة، تنميل أو ضعف؟ اكتبي «لا يوجد» إن لم يظهر شيء منها.";
+    if (focus === "neck") return "هل يوجد تنميل أو وخز أو ضعف في الذراع، دوخة، صداع، أو صعوبة واضحة في تحريك الرقبة؟";
+    if (focus === "shoulder") return "هل يوجد ضعف في الذراع، تنميل، تورم، طقطقة مؤلمة، أو صعوبة في رفع اليد؟";
+    if (focus === "knee") return "هل يوجد تورم، سخونة، قفل في الركبة، عدم ثبات، أو صوت مصحوب بألم؟";
+    if (focus.includes("back")) return "هل يمتد الألم إلى الساق؟ وهل يوجد تنميل، وخز، ضعف، أو تغير في التحكم بالبول أو الأمعاء؟";
+  }
+  return intakeQuestions[field];
+}
+
+function followUpAfter(field, answer, nextField) {
+  const shortAnswer = String(answer).trim().slice(0, 70);
+  const acknowledgements = {
+    currentProblem: `فهمت، المشكلة في ${arabicFocus(chatCareState.intake.currentProblem)}.`,
+    location: `شكرًا، حدّدتِ المكان: ${shortAnswer}.`,
+    painLevel: `تم تسجيل شدة الألم ${chatCareState.intake.painLevel} من 10.`,
+    symptoms: /^(لا|لا يوجد|none|no)$/i.test(shortAnswer) ? "جيد، لم تسجّلي أعراضًا مصاحبة." : "شكرًا، سجّلت الأعراض المصاحبة.",
+    duration: `فهمت، بدأت المشكلة ${shortAnswer}.`,
+    dailyTimeMinutes: `مناسب، لديك ${chatCareState.intake.dailyTimeMinutes} دقيقة يوميًا.`,
+    goal: `تم تسجيل هدفك: ${chatCareState.intake.goal}.`,
+  };
+  return `${acknowledgements[field] || "شكرًا، تم تسجيل إجابتك."}\n\n${questionFor(nextField)}`;
+}
+
+const CARE_PLAN_SYSTEM_PROMPT = `
+أنتِ المساعدة الصحية في تطبيق RemedyQuest، وتخاطبين المريضة سلمى بالعربية فقط.
+
+مهمتك هي عرض خطة التمارين الموجودة في رسالة المستخدم بصياغة واضحة ومطمئنة. التزمي بالقواعد التالية بدقة:
+1. لا تشخّصي الحالة، ولا تدّعي أن الخطة علاج طبي، ولا تضيفي أي تمرين أو معلومة غير موجودة في JSON.
+2. اذكري اسم كل تمرين كما ورد حرفيًا، مع عدد الجولات والتكرارات والمدة.
+3. اذكري تنبيه السلامة الموجود في الحقل safety دون تغيير معناه.
+4. لا تقولي إن الخطة حُفظت أو اعتُمدت؛ فهي ما زالت مسودة.
+5. اختمي حرفيًا بهذه الجملة: اكتبي "موافقة" لإضافة الخطة إلى تمارينك، أو "تغيير" لتعديلها.
+6. لا تستخدمي Markdown أو الجداول، ولا تتجاوزي 130 كلمة.
+
+أعيدي نص الرد فقط، من دون مقدمة تقنية أو شرح لعملك.
+`.trim();
 
 async function buildAssistantResponse(text) {
   const normalized = normalizeText(text);
@@ -105,7 +204,7 @@ async function buildAssistantResponse(text) {
   updateIntakeFromAnswer(expectedField, text);
   const missingField = nextMissingField();
   if (missingField) {
-    return { from: "ai", text: intakeQuestions[missingField], intake: intakeSnapshot() };
+    return { from: "ai", text: followUpAfter(expectedField, text, missingField), intake: intakeSnapshot() };
   }
 
   const draft = createDraftPlan();
@@ -137,21 +236,21 @@ function intakeSnapshot() {
 function invalidAnswerMessage(field, text) {
   const normalized = normalizeText(text);
   if (!normalized || /^(hi|hey|hello|هاي|مرحبا|اهلا|أهلا|سلام)$/.test(normalized)) {
-    return intakeQuestions[field];
+    return questionFor(field);
   }
   if (field === "currentProblem" && !extractProblem(normalized)) {
-    return "\u0644\u0645 \u0623\u0641\u0647\u0645 \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0628\u0648\u0636\u0648\u062D. \u0627\u0643\u062A\u0628\u064A \u0645\u062B\u0644\u0627: \u0623\u0644\u0645 \u0641\u064A \u0627\u0644\u0638\u0647\u0631\u060C \u0627\u0644\u0631\u0642\u0628\u0629\u060C \u0627\u0644\u0643\u062A\u0641\u060C \u0623\u0648 \u0627\u0644\u0631\u0643\u0628\u0629.";
+    return "لم أفهم المنطقة بوضوح. اكتبي مثلًا: ألم في الرأس، الرقبة، الكتف، الظهر، أو الركبة.";
   }
   if (field === "location" && (/^(no|none|لا|لا اشعر|لا يوجد)$/.test(normalized) || normalized.length < 3)) {
-    return "\u0627\u062D\u062A\u0627\u062C \u0627\u0644\u0645\u0643\u0627\u0646 \u0628\u0627\u0644\u062A\u062D\u062F\u064A\u062F. \u0645\u062B\u0644\u0627: \u0623\u0633\u0641\u0644 \u0627\u0644\u0638\u0647\u0631 \u0623\u0648 \u0627\u0644\u0643\u062A\u0641 \u0627\u0644\u0623\u064A\u0645\u0646.";
+    return `أحتاج تحديد المكان بشكل أدق.\n\n${questionFor("location")}`;
   }
-  if (field === "painLevel" && extractPainLevel(normalized) == null) {
+  if (field === "painLevel" && extractPainLevel(normalized, true) == null) {
     return "\u0627\u0643\u062A\u0628\u064A \u0631\u0642\u0645\u0627 \u0645\u0646 0 \u0625\u0644\u0649 10 \u0644\u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0645. \u0645\u062B\u0644\u0627: 4.";
   }
   if (field === "duration" && normalized.length < 3) {
     return "\u0645\u0646\u0630 \u0645\u062A\u0649\u061F \u0645\u062B\u0644\u0627: \u0627\u0644\u064A\u0648\u0645\u060C \u0645\u0646\u0630 \u0623\u0633\u0628\u0648\u0639\u060C \u0623\u0648 \u0645\u0646\u0630 \u0634\u0647\u0631.";
   }
-  if (field === "dailyTimeMinutes" && extractDailyMinutes(normalized) == null) {
+  if (field === "dailyTimeMinutes" && extractDailyMinutes(normalized, true) == null) {
     return "\u0627\u0643\u062A\u0628\u064A \u0639\u062F\u062F \u0627\u0644\u062F\u0642\u0627\u0626\u0642 \u0627\u0644\u0645\u062A\u0627\u062D\u0629. \u0645\u062B\u0644\u0627: 20 \u062F\u0642\u064A\u0642\u0629.";
   }
   if (field === "goal" && !extractGoal(normalized)) {
@@ -166,8 +265,8 @@ function invalidAnswerMessage(field, text) {
 function updateIntakeFromAnswer(field, text) {
   const lower = normalizeText(text);
   const intake = chatCareState.intake;
-  const pain = extractPainLevel(lower);
-  const minutes = extractDailyMinutes(lower);
+  const pain = extractPainLevel(lower, field === "painLevel");
+  const minutes = extractDailyMinutes(lower, field === "dailyTimeMinutes");
 
   if (field === "currentProblem") intake.currentProblem = extractProblem(lower) || text.slice(0, 80);
   if (field === "location") intake.location = text.slice(0, 120);
@@ -205,6 +304,12 @@ function createDraftPlan() {
 }
 
 function pickExercises(focus, easy) {
+  if (focus.includes("head")) {
+    return [
+      exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
+      exerciseDraft("\u062A\u0635\u062D\u064A\u062D \u0627\u0644\u0648\u0636\u0639\u064A\u0629", "\u0627\u0644\u062C\u0633\u0645", 5, 1, 5, "bg-rose-100 text-rose-700"),
+    ];
+  }
   if (focus.includes("neck") || focus.includes("رقبة")) {
     return [
       exerciseDraft("\u062A\u0645\u0631\u064A\u0646 \u0627\u0644\u0631\u0642\u0628\u0629", "\u0627\u0644\u0631\u0642\u0628\u0629 \u0648\u0627\u0644\u0643\u062A\u0641", 4, 1, 5, "bg-teal-100 text-teal-700"),
@@ -289,7 +394,7 @@ async function optionalOpenRouterSummary(plan) {
         messages: [
           {
             role: "system",
-            content: "Write the response in Arabic for Salma. Do not diagnose. Mention the exact exercises provided. Ask her to type موافقة before saving. Keep it under 110 words.",
+            content: CARE_PLAN_SYSTEM_PROMPT,
           },
           {
             role: "user",
@@ -324,6 +429,7 @@ function mentionsProblem(text) {
 }
 
 function extractProblem(text) {
+  if (text.includes("head") || text.includes("headache") || text.includes("رأس") || text.includes("راس") || text.includes("صداع")) return "head";
   if (text.includes("neck") || text.includes("رقبة")) return "neck";
   if (text.includes("shoulder") || text.includes("كتف") || text.includes("اكتاف")) return "shoulder";
   if (text.includes("lower back") || text.includes("اسفل الظهر")) return "lower back";
@@ -350,11 +456,13 @@ function extractDifficulty(text) {
 }
 
 function hasRedFlags(text) {
-  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness)\b/i.test(String(text || ""));
+  return /\b(numb|numbness|tingling|weak|weakness|swelling|fever|sharp|chest|dizzy|dizziness|vision|speech|sudden)\b/i.test(String(text || ""))
+    || /(تنميل|وخز|ضعف|تورم|حرارة|تشوش|نظر|كلام|مفاجئ|إغماء|اغماء|تحكم بالبول|الأمعاء)/.test(String(text || ""));
 }
 
 function arabicFocus(value) {
   const focus = String(value || "");
+  if (focus.includes("head")) return "\u0627\u0644\u0631\u0623\u0633";
   if (focus.includes("neck")) return "\u0627\u0644\u0631\u0642\u0628\u0629";
   if (focus.includes("shoulder")) return "\u0627\u0644\u0643\u062A\u0641";
   if (focus.includes("knee")) return "\u0627\u0644\u0631\u0643\u0628\u0629";
@@ -369,7 +477,7 @@ function normalizeText(text) {
     .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
 }
 
-function extractPainLevel(text) {
+function extractPainLevel(text, allowBareNumber = false) {
   const painPatterns = [
     /\b(10|[0-9])\s*\/\s*10\b/,
     /\b(10|[0-9])\s*(?:out of|from)\s*10\b/,
@@ -381,12 +489,19 @@ function extractPainLevel(text) {
     const match = text.match(pattern);
     if (match) return clampNumber(match[1], 0, 10);
   }
+  if (allowBareNumber && /^(10|[0-9])$/.test(text.trim())) {
+    return clampNumber(text.trim(), 0, 10);
+  }
   return null;
 }
 
-function extractDailyMinutes(text) {
+function extractDailyMinutes(text, allowBareNumber = false) {
   const match = text.match(/(?:^|\s)([1-9][0-9]?)\s*(?:min|mins|minute|minutes|دقيقة|دقائق|دقايق)(?=\s|$|[.,،])/);
-  return match ? clampNumber(match[1], 5, 45) : null;
+  if (match) return clampNumber(match[1], 5, 45);
+  if (allowBareNumber && /^[1-9][0-9]?$/.test(text.trim())) {
+    return clampNumber(text.trim(), 5, 45);
+  }
+  return null;
 }
 
 function clampNumber(value, min, max) {

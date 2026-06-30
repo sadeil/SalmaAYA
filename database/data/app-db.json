@@ -79,6 +79,56 @@
       "reps": 10,
       "done": false,
       "color": "bg-rose-100 text-rose-700"
+    },
+    {
+      "id": 6,
+      "name": "تمرين الرقبة",
+      "area": "الرقبة والكتف",
+      "duration": "4 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-teal-100 text-teal-700"
+    },
+    {
+      "id": 7,
+      "name": "تصحيح الوضعية",
+      "area": "الجسم",
+      "duration": "5 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-rose-100 text-rose-700"
+    },
+    {
+      "id": 8,
+      "name": "تصحيح الوضعية",
+      "area": "الجسم",
+      "duration": "5 min",
+      "sets": 1,
+      "reps": 5,
+      "done": false,
+      "color": "bg-rose-100 text-rose-700"
+    },
+    {
+      "id": 9,
+      "name": "تمرين الظهر",
+      "area": "مرونة الظهر",
+      "duration": "6 min",
+      "sets": 2,
+      "reps": 5,
+      "done": false,
+      "color": "bg-violet-100 text-violet-700"
+    },
+    {
+      "id": 10,
+      "name": "تحريك أسفل الظهر",
+      "area": "أسفل الظهر",
+      "duration": "6 min",
+      "sets": 2,
+      "reps": 5,
+      "done": false,
+      "color": "bg-amber-100 text-amber-700"
     }
   ],
   "patients": [
@@ -134,23 +184,243 @@
   "messages": [
     {
       "from": "ai",
-      "text": "مرحبا سلمى. ما المشكلة اليوم؟"
+      "text": "مرحبًا سلمى. سأطرح أسئلة قصيرة تتغيّر حسب إجاباتك لأفهم الحالة بدقة قبل اقتراح أي تمارين.\n\nما المنطقة التي تزعجك اليوم: الرأس، الرقبة، الكتف، الظهر، أم الركبة؟",
+      "createdAt": "2026-06-30T20:35:22.977Z"
     },
     {
       "from": "user",
-      "text": "My lower back feels tight after sitting at work."
+      "text": "الظهر"
     },
     {
       "from": "ai",
-      "text": "I can help shape a gentle mobility plan. How strong is the discomfort from 1 to 10?"
+      "text": "فهمت، المشكلة في الظهر.\n\nأين الألم في الظهر تحديدًا: أعلى الظهر، منتصفه، أم أسفل الظهر؟ وهل هو في المنتصف أم جهة واحدة؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": null,
+        "painLevel": null,
+        "symptoms": null,
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
     },
     {
       "from": "user",
-      "text": "Around 4, mostly by the end of the day."
+      "text": "خلف"
     },
     {
       "from": "ai",
-      "text": "Thanks. Based on your answers, I suggest a 25-minute low-impact mobility plan. A doctor will review it before it becomes active."
+      "text": "شكرًا، حدّدتِ المكان: خلف.\n\nما درجة الألم من 0 إلى 10؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": null,
+        "symptoms": null,
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "10"
+    },
+    {
+      "from": "ai",
+      "text": "تم تسجيل شدة الألم 10 من 10.\n\nهل يمتد الألم إلى الساق؟ وهل يوجد تنميل، وخز، ضعف، أو تغير في التحكم بالبول أو الأمعاء؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": null,
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "لا يوجد"
+    },
+    {
+      "from": "ai",
+      "text": "جيد، لم تسجّلي أعراضًا مصاحبة.\n\nمنذ متى بدأت المشكلة؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "منذ اليوم"
+    },
+    {
+      "from": "ai",
+      "text": "فهمت، بدأت المشكلة منذ اليوم.\n\nكم دقيقة تستطيعين التمرن اليوم؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": "منذ اليوم",
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "30"
+    },
+    {
+      "from": "ai",
+      "text": "مناسب، لديك 30 دقيقة يوميًا.\n\nما هدفك؟ تخفيف الألم أو تحسين الحركة؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": "منذ اليوم",
+        "dailyTimeMinutes": 30,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "تحسين الوضعية"
+    },
+    {
+      "from": "ai",
+      "text": "تم تسجيل هدفك: تحسين الوضعية.\n\nما المستوى المناسب؟ سهل، متوسط، أو متقدم؟",
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": "منذ اليوم",
+        "dailyTimeMinutes": 30,
+        "goal": "تحسين الوضعية",
+        "difficulty": null
+      }
+    },
+    {
+      "from": "user",
+      "text": "متوسط"
+    },
+    {
+      "from": "ai",
+      "text": "لتحسين وضعيتك، إليك خطة التمارين المقترحة:\n\n1. **تصحيح الوضعية**: 1 مجموعة، 5 تكرارات، مدة 5 دقائق.\n2. **تمرين الظهر**: 2 مجموعة، 5 تكرارات، مدة 6 دقائق.\n3. **تحريك أسفل الظهر**: 2 مجموعة، 5 تكرارات، مدة 6 دقائق.\n\nالوقت اليومي المقترح هو 30 دقيقة. تنبيه السلامة: تحركي ببطء وتوقفي إذا زاد الألم. \n\nاكتبي \"موافقة\" لإضافة الخطة إلى تمارينك، أو \"تغيير\" لتعديلها.",
+      "plan": {
+        "title": "الظهر - تحسين الوضعية",
+        "focus": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "dailyTimeMinutes": 30,
+        "goal": "تحسين الوضعية",
+        "difficulty": "متوسط",
+        "safety": "تحركي ببطء وتوقفي إذا زاد الألم.",
+        "exercises": [
+          {
+            "name": "تصحيح الوضعية",
+            "area": "الجسم",
+            "duration": "5 min",
+            "sets": 1,
+            "reps": 5,
+            "done": false,
+            "color": "bg-rose-100 text-rose-700"
+          },
+          {
+            "name": "تمرين الظهر",
+            "area": "مرونة الظهر",
+            "duration": "6 min",
+            "sets": 2,
+            "reps": 5,
+            "done": false,
+            "color": "bg-violet-100 text-violet-700"
+          },
+          {
+            "name": "تحريك أسفل الظهر",
+            "area": "أسفل الظهر",
+            "duration": "6 min",
+            "sets": 2,
+            "reps": 5,
+            "done": false,
+            "color": "bg-amber-100 text-amber-700"
+          }
+        ]
+      },
+      "needsConfirmation": true,
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": "منذ اليوم",
+        "dailyTimeMinutes": 30,
+        "goal": "تحسين الوضعية",
+        "difficulty": "متوسط"
+      }
+    },
+    {
+      "from": "user",
+      "text": "approve"
+    },
+    {
+      "from": "ai",
+      "text": "تمت الموافقة. أضفت 3 تمارين إلى صفحة التمارين.",
+      "planApplied": true,
+      "exercises": [
+        {
+          "id": 8,
+          "name": "تصحيح الوضعية",
+          "area": "الجسم",
+          "duration": "5 min",
+          "sets": 1,
+          "reps": 5,
+          "done": false,
+          "color": "bg-rose-100 text-rose-700"
+        },
+        {
+          "id": 9,
+          "name": "تمرين الظهر",
+          "area": "مرونة الظهر",
+          "duration": "6 min",
+          "sets": 2,
+          "reps": 5,
+          "done": false,
+          "color": "bg-violet-100 text-violet-700"
+        },
+        {
+          "id": 10,
+          "name": "تحريك أسفل الظهر",
+          "area": "أسفل الظهر",
+          "duration": "6 min",
+          "sets": 2,
+          "reps": 5,
+          "done": false,
+          "color": "bg-amber-100 text-amber-700"
+        }
+      ],
+      "intake": {
+        "currentProblem": "back",
+        "location": "خلف",
+        "painLevel": 10,
+        "symptoms": "لا يوجد",
+        "duration": "منذ اليوم",
+        "dailyTimeMinutes": 30,
+        "goal": "تحسين الوضعية",
+        "difficulty": "متوسط"
+      }
     }
   ],
   "patientProfile": {
@@ -167,11 +437,582 @@
   },
   "chatCareState": {
     "intake": {
-      "currentProblem": null,
-      "painLevel": null,
-      "dailyTimeMinutes": null
+      "currentProblem": "back",
+      "location": "خلف",
+      "painLevel": 10,
+      "symptoms": "لا يوجد",
+      "duration": "منذ اليوم",
+      "dailyTimeMinutes": 30,
+      "goal": "تحسين الوضعية",
+      "difficulty": "متوسط"
     },
     "draftPlan": null
   },
-  "formCheckSessions": []
+  "chatConversations": [
+    {
+      "id": 4,
+      "title": "محادثة حول جهة واحدة",
+      "status": "completed",
+      "startedAt": "2026-06-30T20:24:07.208Z",
+      "endedAt": "2026-06-30T20:35:22.977Z",
+      "messageCount": 21,
+      "messages": [
+        {
+          "from": "ai",
+          "text": "مرحبا سلمى. سأطرح عليك أسئلة ثم أجهز خطة تمارين.\n\nما المشكلة اليوم؟ الظهر، الرقبة، الكتف، أو الركبة؟",
+          "createdAt": "2026-06-30T20:24:07.208Z"
+        },
+        {
+          "from": "user",
+          "text": "الراس"
+        },
+        {
+          "from": "ai",
+          "text": "أين تشعرين بالألم في الرأس تحديدًا: الجبهة، خلف الرأس، أعلى الرأس، جهة واحدة، أم حول العينين؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": null,
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "جهة واحدة"
+        },
+        {
+          "from": "ai",
+          "text": "شكرًا، حدّدتِ المكان: جهة واحدة.\n\nما درجة الألم من 0 إلى 10؟",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "10"
+        },
+        {
+          "from": "ai",
+          "text": "تم تسجيل شدة الألم 10 من 10.\n\nهل يصاحب ألم الرأس غثيان، حساسية للضوء، تشوش في النظر، دوخة، حرارة، تنميل أو ضعف؟ اكتبي «لا يوجد» إن لم يظهر شيء منها.",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "تورم"
+        },
+        {
+          "from": "ai",
+          "text": "شكرًا، سجّلت الأعراض المصاحبة.\n\nمنذ متى بدأت المشكلة؟",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "يومين"
+        },
+        {
+          "from": "ai",
+          "text": "فهمت، بدأت المشكلة يومين.\n\nكم دقيقة تستطيعين التمرن اليوم؟",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "30"
+        },
+        {
+          "from": "ai",
+          "text": "مناسب، لديك 30 دقيقة يوميًا.\n\nما هدفك؟ تخفيف الألم أو تحسين الحركة؟",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": 30,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "زيادة القوة"
+        },
+        {
+          "from": "ai",
+          "text": "ما هدفك؟ مثلا: تخفيف الألم أو تحسين الحركة.",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": 30,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "تحسين الوضعية"
+        },
+        {
+          "from": "ai",
+          "text": "تم تسجيل هدفك: تحسين الوضعية.\n\nما المستوى المناسب؟ سهل، متوسط، أو متقدم؟",
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": 30,
+            "goal": "تحسين الوضعية",
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "متقدم"
+        },
+        {
+          "from": "ai",
+          "text": "إليك خطة التمارين لتحسين الوضعية:\n\n1. تمرين الرقبة: 4 دقائق، مجموعة واحدة، 5 تكرارات.\n2. تصحيح الوضعية: 5 دقائق، مجموعة واحدة، 5 تكرارات.\n\nتنبيه السلامة: اجعلي التمارين خفيفة جدا وتواصلي مع طبيب إذا زادت الأعراض. \n\nاكتبي \"موافقة\" لإضافة الخطة إلى تمارينك، أو \"تغيير\" لتعديلها.",
+          "plan": {
+            "title": "الرأس - تحسين الوضعية",
+            "focus": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "dailyTimeMinutes": 30,
+            "goal": "تحسين الوضعية",
+            "difficulty": "متقدم",
+            "safety": "اجعلي التمارين خفيفة جدا وتواصلي مع طبيب إذا زادت الأعراض.",
+            "exercises": [
+              {
+                "name": "تمرين الرقبة",
+                "area": "الرقبة والكتف",
+                "duration": "4 min",
+                "sets": 1,
+                "reps": 5,
+                "done": false,
+                "color": "bg-teal-100 text-teal-700"
+              },
+              {
+                "name": "تصحيح الوضعية",
+                "area": "الجسم",
+                "duration": "5 min",
+                "sets": 1,
+                "reps": 5,
+                "done": false,
+                "color": "bg-rose-100 text-rose-700"
+              }
+            ]
+          },
+          "needsConfirmation": true,
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": 30,
+            "goal": "تحسين الوضعية",
+            "difficulty": "متقدم"
+          }
+        },
+        {
+          "from": "user",
+          "text": "approve"
+        },
+        {
+          "from": "ai",
+          "text": "تمت الموافقة. أضفت 2 تمارين إلى صفحة التمارين.",
+          "planApplied": true,
+          "exercises": [
+            {
+              "id": 6,
+              "name": "تمرين الرقبة",
+              "area": "الرقبة والكتف",
+              "duration": "4 min",
+              "sets": 1,
+              "reps": 5,
+              "done": false,
+              "color": "bg-teal-100 text-teal-700"
+            },
+            {
+              "id": 7,
+              "name": "تصحيح الوضعية",
+              "area": "الجسم",
+              "duration": "5 min",
+              "sets": 1,
+              "reps": 5,
+              "done": false,
+              "color": "bg-rose-100 text-rose-700"
+            }
+          ],
+          "intake": {
+            "currentProblem": "head",
+            "location": "جهة واحدة",
+            "painLevel": 10,
+            "symptoms": "تورم",
+            "duration": "يومين",
+            "dailyTimeMinutes": 30,
+            "goal": "تحسين الوضعية",
+            "difficulty": "متقدم"
+          }
+        }
+      ],
+      "intake": {
+        "currentProblem": "head",
+        "location": "جهة واحدة",
+        "painLevel": 10,
+        "symptoms": "تورم",
+        "duration": "يومين",
+        "dailyTimeMinutes": 30,
+        "goal": "تحسين الوضعية",
+        "difficulty": "متقدم"
+      }
+    },
+    {
+      "id": 3,
+      "title": "محادثة حول الراس",
+      "status": "completed",
+      "startedAt": "2026-06-30T20:06:37.033Z",
+      "endedAt": "2026-06-30T20:24:07.208Z",
+      "messageCount": 15,
+      "messages": [
+        {
+          "from": "ai",
+          "text": "مرحبا سلمى. سأطرح عليك أسئلة ثم أجهز خطة تمارين.\n\nما المشكلة اليوم؟ الظهر، الرقبة، الكتف، أو الركبة؟",
+          "createdAt": "2026-06-30T20:06:37.033Z"
+        },
+        {
+          "from": "user",
+          "text": "الراس"
+        },
+        {
+          "from": "ai",
+          "text": "أين تشعرين بالألم بالتحديد؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": null,
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "الراس"
+        },
+        {
+          "from": "ai",
+          "text": "ما درجة الألم من 0 إلى 10؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "2"
+        },
+        {
+          "from": "ai",
+          "text": "هل يوجد تنميل، وخز، ضعف، تورم، أو ألم حاد؟ إذا لا يوجد، اكتبي: لا يوجد.",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": 2,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "لا"
+        },
+        {
+          "from": "ai",
+          "text": "منذ متى بدأت المشكلة؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": 2,
+            "symptoms": "لا",
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "قبل يوم"
+        },
+        {
+          "from": "ai",
+          "text": "كم دقيقة تستطيعين التمرن اليوم؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": 2,
+            "symptoms": "لا",
+            "duration": "قبل يوم",
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "11"
+        },
+        {
+          "from": "ai",
+          "text": "ما هدفك؟ تخفيف الألم أو تحسين الحركة؟",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": 2,
+            "symptoms": "لا",
+            "duration": "قبل يوم",
+            "dailyTimeMinutes": 11,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "تحسين"
+        },
+        {
+          "from": "ai",
+          "text": "ما هدفك؟ مثلا: تخفيف الألم أو تحسين الحركة.",
+          "intake": {
+            "currentProblem": "الراس",
+            "location": "الراس",
+            "painLevel": 2,
+            "symptoms": "لا",
+            "duration": "قبل يوم",
+            "dailyTimeMinutes": 11,
+            "goal": null,
+            "difficulty": null
+          }
+        }
+      ],
+      "intake": {
+        "currentProblem": "الراس",
+        "location": "الراس",
+        "painLevel": 2,
+        "symptoms": "لا",
+        "duration": "قبل يوم",
+        "dailyTimeMinutes": 11,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "id": 2,
+      "title": "محادثة حول الراس",
+      "status": "completed",
+      "startedAt": "2026-06-30T20:05:46.600Z",
+      "endedAt": "2026-06-30T20:06:37.033Z",
+      "messageCount": 7,
+      "messages": [
+        {
+          "from": "ai",
+          "text": "مرحبا سلمى. سأطرح عليك أسئلة ثم أجهز خطة تمارين.\n\nما المشكلة اليوم؟ الظهر، الرقبة، الكتف، أو الركبة؟",
+          "createdAt": "2026-06-30T20:05:46.600Z"
+        },
+        {
+          "from": "user",
+          "text": "الموخرع"
+        },
+        {
+          "from": "ai",
+          "text": "أين تشعرين بالألم بالتحديد؟",
+          "intake": {
+            "currentProblem": "الموخرع",
+            "location": null,
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "الراس"
+        },
+        {
+          "from": "ai",
+          "text": "ما درجة الألم من 0 إلى 10؟",
+          "intake": {
+            "currentProblem": "الموخرع",
+            "location": "الراس",
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        },
+        {
+          "from": "user",
+          "text": "11"
+        },
+        {
+          "from": "ai",
+          "text": "اكتبي رقما من 0 إلى 10 لدرجة الألم. مثلا: 4.",
+          "intake": {
+            "currentProblem": "الموخرع",
+            "location": "الراس",
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        }
+      ],
+      "intake": {
+        "currentProblem": "الموخرع",
+        "location": "الراس",
+        "painLevel": null,
+        "symptoms": null,
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    },
+    {
+      "id": 1,
+      "title": "محادثة حول الظهر",
+      "status": "completed",
+      "startedAt": "2026-06-30T20:05:46.600Z",
+      "endedAt": "2026-06-30T20:05:46.600Z",
+      "messageCount": 7,
+      "messages": [
+        {
+          "from": "ai",
+          "text": "مرحبا سلمى. ما المشكلة اليوم؟"
+        },
+        {
+          "from": "user",
+          "text": "My lower back feels tight after sitting at work."
+        },
+        {
+          "from": "ai",
+          "text": "I can help shape a gentle mobility plan. How strong is the discomfort from 1 to 10?"
+        },
+        {
+          "from": "user",
+          "text": "Around 4, mostly by the end of the day."
+        },
+        {
+          "from": "ai",
+          "text": "Thanks. Based on your answers, I suggest a 25-minute low-impact mobility plan. A doctor will review it before it becomes active."
+        },
+        {
+          "from": "user",
+          "text": "مرخبا"
+        },
+        {
+          "from": "ai",
+          "text": "أين تشعرين بالألم بالتحديد؟",
+          "intake": {
+            "currentProblem": "مرخبا",
+            "location": null,
+            "painLevel": null,
+            "symptoms": null,
+            "duration": null,
+            "dailyTimeMinutes": null,
+            "goal": null,
+            "difficulty": null
+          }
+        }
+      ],
+      "intake": {
+        "currentProblem": "مرخبا",
+        "location": null,
+        "painLevel": null,
+        "symptoms": null,
+        "duration": null,
+        "dailyTimeMinutes": null,
+        "goal": null,
+        "difficulty": null
+      }
+    }
+  ],
+  "formCheckSessions": [
+    {
+      "id": 1,
+      "createdAt": "2026-06-30T19:42:38.105Z",
+      "exerciseId": "neckStretch",
+      "exerciseName": "Neck mobility",
+      "durationMs": 11959.5,
+      "totalReps": 5,
+      "correctReps": 0,
+      "targetReps": 5,
+      "completed": true,
+      "mistakes": {
+        "shoulder shrug": 5
+      },
+      "startedAt": "2026-06-30T19:42:26.134Z",
+      "endedAt": "2026-06-30T19:42:38.094Z"
+    }
+  ]
 }

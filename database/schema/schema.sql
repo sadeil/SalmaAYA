@@ -70,6 +70,18 @@ CREATE TABLE chatbot_care_state (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE chat_conversations (
+  id INTEGER PRIMARY KEY,
+  patient_user_id TEXT NOT NULL REFERENCES patient_profiles(user_id),
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'completed',
+  messages_json TEXT NOT NULL,
+  intake_json TEXT NOT NULL DEFAULT '{}',
+  message_count INTEGER NOT NULL DEFAULT 0,
+  started_at TEXT NOT NULL,
+  ended_at TEXT NOT NULL
+);
+
 CREATE TABLE form_check_sessions (
   id INTEGER PRIMARY KEY,
   patient_user_id TEXT NOT NULL REFERENCES patient_profiles(user_id),

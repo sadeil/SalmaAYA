@@ -51,6 +51,7 @@ const defaultData = {
     },
     draftPlan: null,
   },
+  chatConversations: [],
   formCheckSessions: [],
 };
 
@@ -62,10 +63,12 @@ export const patients = db.patients;
 export const messages = db.messages;
 export const patientProfile = db.patientProfile;
 export const chatCareState = db.chatCareState;
+export const chatConversations = db.chatConversations;
 export const formCheckSessions = db.formCheckSessions;
 
 let nextSessionId = nextId(formCheckSessions);
 let nextExerciseId = nextId(exercises);
+let nextConversationId = nextId(chatConversations);
 
 export function nextExercisePlanId() {
   const id = nextExerciseId;
@@ -76,6 +79,12 @@ export function nextExercisePlanId() {
 export function nextFormCheckSessionId() {
   const id = nextSessionId;
   nextSessionId += 1;
+  return id;
+}
+
+export function nextChatConversationId() {
+  const id = nextConversationId;
+  nextConversationId += 1;
   return id;
 }
 
@@ -95,7 +104,7 @@ function normalizeDatabase(data) {
     chatCareState: data.chatCareState && typeof data.chatCareState === "object"
       ? {
           intake: {
-            currentProblem: data.chatCareState.intake?.currentProblem ?? null,
+            currentProblem: normalizeChatProblem(data.chatCareState.intake?.currentProblem),
             location: data.chatCareState.intake?.location ?? null,
             painLevel: data.chatCareState.intake?.painLevel ?? null,
             symptoms: data.chatCareState.intake?.symptoms ?? null,
@@ -107,6 +116,7 @@ function normalizeDatabase(data) {
           draftPlan: data.chatCareState.draftPlan ?? null,
         }
       : defaultData.chatCareState,
+    chatConversations: Array.isArray(data.chatConversations) ? data.chatConversations : [],
     formCheckSessions: Array.isArray(data.formCheckSessions) ? data.formCheckSessions : [],
   };
 }
@@ -114,4 +124,15 @@ function normalizeDatabase(data) {
 function nextId(items) {
   const max = items.reduce((highest, item) => Math.max(highest, Number(item.id) || 0), 0);
   return max + 1;
+}
+
+function normalizeChatProblem(value) {
+  if (value == null) return null;
+  const text = String(value).toLowerCase();
+  if (text.includes("رأس") || text.includes("راس") || text.includes("صداع") || text.includes("head")) return "head";
+  if (text.includes("رقبة") || text.includes("neck")) return "neck";
+  if (text.includes("كتف") || text.includes("shoulder")) return "shoulder";
+  if (text.includes("ركبة") || text.includes("knee")) return "knee";
+  if (text.includes("ظهر") || text.includes("back")) return text.includes("أسفل") || text.includes("lower") ? "lower back" : "back";
+  return value;
 }

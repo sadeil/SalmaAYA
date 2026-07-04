@@ -1420,7 +1420,58 @@ export function Refunds() {
   );
 }
 
+const careMessageStorageKey = "remedyquest-care-messages";
+const initialCareMessages = [
+  {
+    id: "doctor-welcome",
+    sender: "doctor",
+    text: "Hi Salma, your progress this week looks strong. How did the lower back mobility exercise feel?",
+  },
+  {
+    id: "patient-reply",
+    sender: "patient",
+    text: "Much better. I feel less tight after work now.",
+  },
+];
+
+function loadCareMessages() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(careMessageStorageKey));
+    return Array.isArray(saved) && saved.length ? saved : initialCareMessages;
+  } catch {
+    return initialCareMessages;
+  }
+}
+
 export function MessagesPage() {
+  const [messages, setMessages] = useState(loadCareMessages);
+  const [draft, setDraft] = useState("");
+  const messageListRef = useRef(null);
+
+  useEffect(() => {
+    window.localStorage.setItem(careMessageStorageKey, JSON.stringify(messages));
+    messageListRef.current?.scrollTo({
+      top: messageListRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
+
+  function sendMessage(event) {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+
+    setMessages((current) => [
+      ...current,
+      {
+        id: `patient-${Date.now()}`,
+        sender: "patient",
+        text,
+      },
+    ]);
+    setDraft("");
+  }
+
   return (
     <>
       <PageHeader
@@ -1465,31 +1516,48 @@ export function MessagesPage() {
               </p>
             </div>
           </div>
-          <div className="flex-1 space-y-4 bg-gradient-to-b from-slate-50/60 to-white p-5">
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-md rounded-3xl rounded-bl-md bg-white p-4 text-sm leading-6 shadow-card"
-            >
-              Hi Salma, your progress this week looks strong. How did the lower
-              back mobility exercise feel?
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="ml-auto max-w-md rounded-3xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white shadow-lg shadow-teal-900/10"
-            >
-              Much better. I feel less tight after work now.
-            </motion.div>
+          <div
+            ref={messageListRef}
+            aria-live="polite"
+            className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-slate-50/60 to-white p-5"
+          >
+            {messages.map((message, index) => {
+              const fromPatient = message.sender === "patient";
+              return (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.05, 0.2) }}
+                  className={
+                    fromPatient
+                      ? "ml-auto max-w-md whitespace-pre-wrap rounded-3xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white shadow-lg shadow-teal-900/10"
+                      : "max-w-md whitespace-pre-wrap rounded-3xl rounded-bl-md bg-white p-4 text-sm leading-6 shadow-card"
+                  }
+                >
+                  {message.text}
+                </motion.div>
+              );
+            })}
           </div>
           <div className="border-t bg-white p-4">
-            <div className="flex gap-2">
-              <input className="field" placeholder="Write a message..." />
-              <button className="btn-primary px-4">
+            <form className="flex gap-2" onSubmit={sendMessage}>
+              <input
+                className="field"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Write a message..."
+                aria-label="Message"
+              />
+              <button
+                type="submit"
+                className="btn-primary px-4 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!draft.trim()}
+                aria-label="Send message"
+              >
                 <Send size={18} />
               </button>
-            </div>
+            </form>
           </div>
         </section>
       </div>

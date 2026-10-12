@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -66,13 +66,33 @@ function parseNumeric(value) {
 export function CountUp({ value, duration = 1100, className = "" }) {
   const { num, prefix, suffix } = parseNumeric(value);
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const [inView, setInView] = useState(false);
   const [display, setDisplay] = useState(num == null ? value : 0);
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+  // A plain IntersectionObserver: framer's useInView({ once }) can miss the
+  // first intersection under StrictMode, leaving the counter stuck at 0.
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || inView) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setInView(true);
+        observer.disconnect();
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [inView]);
+
   useEffect(() => {
     if (num == null) return;
-    if (!inView || reduced) {
+    if (!inView) return;
+    if (reduced) {
       setDisplay(num);
       return;
     }

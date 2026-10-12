@@ -186,11 +186,11 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
   }, [exercise, indexOf]);
 
   return (
-    <div className="relative h-full min-h-[420px] w-full overflow-hidden rounded-l-[2rem] bg-ink">
+    <div className="relative h-[68vh] min-h-[420px] w-full overflow-hidden rounded-t-[2rem] bg-ink lg:h-full lg:rounded-none lg:rounded-s-[2rem]">
       <CameraView ref={cameraRef} className="absolute inset-0" />
-      <PoseCanvas landmarks={landmarks} mirror />
+      <PoseCanvas landmarks={landmarks} source={cameraRef} />
 
-      <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
+      <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2 pe-12 lg:pe-0">
         <span className="pill bg-white/90 text-teal-700 shadow-card">
           <Activity size={14} />
           {STATUS_LABEL[status] ?? "Live"}
@@ -225,7 +225,7 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
       )}
 
       {liveFeedback && status === "running" && (
-        <div className="absolute inset-x-6 bottom-6 rounded-2xl bg-ink/85 p-3 text-center text-white shadow-lg backdrop-blur">
+        <div className="absolute bottom-3 end-16 start-3 rounded-2xl bg-ink/85 p-3 text-center text-white shadow-lg backdrop-blur">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
             Coach
           </p>

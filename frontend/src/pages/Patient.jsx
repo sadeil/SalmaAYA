@@ -54,7 +54,7 @@ import { api } from "../services/api";
 
 // Maps each exercise id from the daily plan to the rule file that knows how
 // to analyze that movement on camera. Exercises that don't have a matching
-// rule simply don't expose the camera toggle â€” we'd rather be honest about
+// rule simply don't expose the camera toggle — we'd rather be honest about
 // what we can actually score than fake feedback.
 const exerciseCameraRuleByPlanId = {
   1: "neckStretch",     // Neck release
@@ -456,7 +456,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
     : null;
 
   useEffect(() => {
-    // Pause the SVG animation when the camera is on â€” it's hidden anyway.
+    // Pause the SVG animation when the camera is on — it's hidden anyway.
     if (cameraMode) return undefined;
     if (!playing) return undefined;
     const timer = window.setInterval(
@@ -564,7 +564,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
                 </p>
                 <p className="mt-1 text-xs text-teal-800/80">
                   {cameraRule
-                    ? "Use your webcam â€” we count reps and flag form issues in real time."
+                    ? "Use your webcam — we count reps and flag form issues in real time."
                     : "Camera form check isn't available for this exercise yet."}
                 </p>
               </div>

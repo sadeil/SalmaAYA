@@ -361,6 +361,17 @@ const translations = {
   ,"+12.4% this month": "+12.4% هذا الشهر"
   ,"Level 1": "المرحلة 1"
   ,"Level 2": "المرحلة 2"
+  ,"Requesting camera access…": "جارٍ طلب إذن الكاميرا…"
+  ,"Camera unavailable": "الكاميرا غير متاحة"
+  ,"Try again": "حاول مرة أخرى"
+  ,"The camera only works over HTTPS. Open the secure (https://) link of the app on your phone.": "الكاميرا تعمل فقط عبر HTTPS. افتح رابط التطبيق الآمن (https://) على هاتفك."
+  ,"Camera permission was denied. Allow camera access for this site in your browser settings, then tap Try again.": "تم رفض إذن الكاميرا. اسمح للموقع باستخدام الكاميرا من إعدادات المتصفح، ثم اضغط حاول مرة أخرى."
+  ,"No camera found on this device.": "لم يتم العثور على كاميرا في هذا الجهاز."
+  ,"The camera is being used by another app. Close it and tap Try again.": "الكاميرا مستخدمة من تطبيق آخر. أغلقه ثم اضغط حاول مرة أخرى."
+  ,"Could not start the camera.": "تعذّر تشغيل الكاميرا."
+  ,"Form coach": "مدرب الحركة"
+  ,"Form check": "فحص الحركة"
+  ,"AI exercise form coach": "مدرب الحركة الذكي"
 };
 
 const LanguageContext = createContext(null);
@@ -411,9 +422,13 @@ export function AutoTranslate() {
       }
       nodes.forEach(node => {
         if (!node.parentElement || node.parentElement.closest("[data-no-translate]") || ["SCRIPT", "STYLE"].includes(node.parentElement.tagName)) return;
-        if (!node.__rqEnglish) node.__rqEnglish = node.nodeValue;
+        // If React changed the text since we last wrote it (counters, timers,
+        // live rep counts), that new value becomes the English source.
+        // Otherwise we'd keep restoring the very first value forever.
+        if (node.__rqEnglish === undefined || node.nodeValue !== node.__rqApplied) node.__rqEnglish = node.nodeValue;
         const desired = language === "ar" ? translateText(node.__rqEnglish) : node.__rqEnglish;
         if (node.nodeValue !== desired) node.nodeValue = desired;
+        node.__rqApplied = desired;
       });
       const elements = root.querySelectorAll ? [root, ...root.querySelectorAll("[placeholder]")] : [];
       elements.forEach(element => {

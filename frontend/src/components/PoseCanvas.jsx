@@ -6,8 +6,12 @@ import { LANDMARK_VISIBILITY_THRESHOLD } from "../utils/visibilityCheck.js";
 // re-render via requestAnimationFrame whenever the parent updates the
 // `landmarks` prop — drawing happens on the canvas, NOT in React, to keep
 // the render path fast.
+//
+// Pass `source` (the CameraView ref) so the overlay can follow the video's
+// object-cover crop and the front/back mirroring. Without it, a portrait
+// phone stream inside a landscape box would put the skeleton off the body.
 
-export function PoseCanvas({ landmarks, mirror = true, className = "" }) {
+export function PoseCanvas({ landmarks, mirror = true, source, className = "" }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const landmarksRef = useRef(null);
@@ -41,14 +45,17 @@ export function PoseCanvas({ landmarks, mirror = true, className = "" }) {
         ctx.clearRect(0, 0, w, h);
         const lms = landmarksRef.current;
         if (lms && lms.length) {
-          drawSkeleton(ctx, lms, w, h, mirror);
+          const camera = source?.current;
+          const video = camera?.videoElement;
+          const isMirrored = camera ? camera.mirrored !== false : mirror;
+          drawSkeleton(ctx, lms, w, h, isMirrored, video?.videoWidth, video?.videoHeight);
         }
       }
       raf = requestAnimationFrame(draw);
     }
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [mirror]);
+  }, [mirror, source]);
 
   return (
     <div ref={containerRef} className={`pointer-events-none absolute inset-0 ${className}`}>
@@ -57,10 +64,21 @@ export function PoseCanvas({ landmarks, mirror = true, className = "" }) {
   );
 }
 
-function drawSkeleton(ctx, landmarks, w, h, mirror) {
+function drawSkeleton(ctx, landmarks, w, h, mirror, videoWidth, videoHeight) {
+  // Match the video's `object-cover`: scale the frame to fill the box and
+  // centre it, cropping the overflow.
+  let drawnW = w;
+  let drawnH = h;
+  if (videoWidth && videoHeight) {
+    const scale = Math.max(w / videoWidth, h / videoHeight);
+    drawnW = videoWidth * scale;
+    drawnH = videoHeight * scale;
+  }
+  const offsetX = (w - drawnW) / 2;
+  const offsetY = (h - drawnH) / 2;
   const project = (lm) => {
-    const x = (mirror ? 1 - lm.x : lm.x) * w;
-    const y = lm.y * h;
+    const x = offsetX + (mirror ? 1 - lm.x : lm.x) * drawnW;
+    const y = offsetY + lm.y * drawnH;
     return [x, y];
   };
 

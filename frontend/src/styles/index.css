@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -521,3 +521,96 @@
 @media (prefers-reduced-motion: reduce) {
   .exercise-demo *, .exercise-orbit { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* =====================================================================
+   Luxe layer — a refined finish on top of the base system: editorial
+   serif headings, a champagne-gold accent, deeper ink buttons and finer
+   hairlines/shadows. Kept as overrides so components need no changes.
+   ===================================================================== */
+:root {
+  --rq-gold: #c9a45c;
+  --rq-gold-soft: #ead9b4;
+  --rq-ink-deep: #0d2a28;
+  --hairline: rgba(13, 42, 40, .07);
+  --shadow-luxe: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 1px 2px rgba(13, 42, 40, .04), 0 12px 32px -12px rgba(13, 42, 40, .12), 0 32px 64px -32px rgba(13, 42, 40, .14);
+  --shadow-luxe-hover: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 2px 4px rgba(13, 42, 40, .05), 0 20px 40px -14px rgba(13, 42, 40, .18), 0 48px 80px -36px rgba(13, 42, 40, .2);
+}
+
+body {
+  background-color: #f6f7f3;
+  background-image:
+    radial-gradient(circle at 85% -5%, rgba(201, 164, 92, .09), transparent 30rem),
+    radial-gradient(circle at 10% 30%, rgba(32, 168, 138, .07), transparent 30rem),
+    radial-gradient(circle at 60% 100%, rgba(142, 130, 217, .06), transparent 34rem);
+  background-attachment: fixed;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Editorial display type for Latin headings; Arabic keeps Tajawal. */
+html:not([dir="rtl"]) h1,
+html:not([dir="rtl"]) h2,
+html:not([dir="rtl"]) .section-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-variation-settings: "opsz" 120;
+}
+html:not([dir="rtl"]) h3 { letter-spacing: -0.01em; }
+
+.gradient-text {
+  background: linear-gradient(105deg, #0f3b37 5%, #1a8f78 45%, #b8924a 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+html:not([dir="rtl"]) .gradient-text { font-style: italic; padding-inline-end: .06em; }
+
+@layer components {
+  /* Cards: ivory glass with a precise hairline and layered depth. */
+  .card {
+    border-color: var(--hairline);
+    background-color: rgba(255, 255, 255, .97);
+    box-shadow: var(--shadow-luxe);
+  }
+  .card:hover { box-shadow: var(--shadow-luxe-hover); }
+  .card::after {
+    background: linear-gradient(135deg, rgba(201, 164, 92, .55), rgba(201, 164, 92, 0) 30%, rgba(32, 168, 138, 0) 70%, rgba(32, 168, 138, .35));
+  }
+
+  .metric-chip, .glass-panel {
+    border-color: var(--hairline);
+    box-shadow: var(--shadow-luxe);
+  }
+
+  /* Buttons: deep ink with a lit top edge and a gold hairline on hover. */
+  .btn-primary {
+    border-radius: 999px;
+    background-color: var(--rq-ink-deep);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 12px 18px -12px rgba(255, 255, 255, .12), 0 0 0 1px rgba(13, 42, 40, .9), 0 10px 24px -10px rgba(13, 42, 40, .55);
+    letter-spacing: .01em;
+  }
+  .btn-primary:hover {
+    background-color: #163f3b;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 0 0 1px rgba(201, 164, 92, .7), 0 16px 32px -12px rgba(13, 42, 40, .6);
+  }
+  .btn-soft {
+    border-radius: 999px;
+    border-color: var(--hairline);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(13, 42, 40, .05), 0 8px 20px -12px rgba(13, 42, 40, .18);
+  }
+  .btn-soft:hover { border-color: rgba(201, 164, 92, .7); }
+
+  .field { border-color: var(--hairline); background: rgba(255, 255, 255, .95); box-shadow: inset 0 1px 2px rgba(13, 42, 40, .04); }
+  .field:focus { border-color: rgba(201, 164, 92, .8); box-shadow: 0 0 0 4px rgba(201, 164, 92, .14); }
+
+  .label { letter-spacing: .16em; }
+  .pill { letter-spacing: .02em; }
+
+  /* Gold hairline used under eyebrow labels and section breaks. */
+  .divider { background: linear-gradient(90deg, transparent, rgba(201, 164, 92, .55), transparent); }
+}
+
+::selection { background: rgba(201, 164, 92, .25); color: var(--rq-ink-deep); }
+
+/* Video stage: a framed, gallery-like camera surface. */
+video { background: #0b2220; }

@@ -30,7 +30,7 @@ const adminLinks = [
 ];
 
 // =====================================================================
-// Public navigation â€” gains a hairline that becomes more opaque as the
+// Public navigation — gains a hairline that becomes more opaque as the
 // user scrolls (depth cue) and an animated brand glow.
 // =====================================================================
 export function PublicNav() {
@@ -84,7 +84,7 @@ export function PublicNav() {
 }
 
 // =====================================================================
-// Sidebar nav item â€” owns the sliding active rail via framer-motion's
+// Sidebar nav item — owns the sliding active rail via framer-motion's
 // layoutId. The rail morphs from one item to another instead of just
 // switching backgrounds, which is the single biggest "this feels
 // expensive" detail in a dashboard.
@@ -134,7 +134,7 @@ export function DashboardLayout({ role = "patient" }) {
   }, [location.pathname]);
 
   // Click-outside for the avatar menu. The ref wraps the trigger + dropdown,
-  // so any pointerdown outside that subtree closes the menu â€” without any
+  // so any pointerdown outside that subtree closes the menu — without any
   // overlay that would block clicks on the dropdown's own links.
   const menuRef = useRef(null);
   useEffect(() => {

@@ -338,11 +338,11 @@ export default function ExerciseCamera() {
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.88fr)]">
         <div className="space-y-5" data-testid="form-camera-column">
           <div className="card overflow-hidden p-0" data-testid="form-camera-card">
-          <div className="relative aspect-video w-full">
+          <div className="relative aspect-[3/4] w-full sm:aspect-video">
             <div className="absolute inset-0">
               <CameraView ref={cameraRef} className="h-full w-full" />
             </div>
-            <PoseCanvas landmarks={landmarks} mirror />
+            <PoseCanvas landmarks={landmarks} source={cameraRef} />
             {status === STATUS.CALIBRATING && (
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-4 text-center text-white">
                 <p className="text-sm font-extrabold">Hold still while we calibrate…</p>

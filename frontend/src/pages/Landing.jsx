@@ -3,10 +3,11 @@ import { motion, useInView, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Activity, ArrowRight, BadgeDollarSign, Bot, CalendarCheck, CheckCircle2,
-  HeartPulse, Play, ShieldCheck, Sparkles, Stethoscope, Trophy, Zap,
+  HeartPulse, LogIn, ShieldCheck, Sparkles, Stethoscope, Trophy, Zap,
 } from "lucide-react";
 import { Footer, PublicNav } from "../components/Layout";
 import { CountUp, SectionTitle } from "../components/UI";
+import { homePathFor, useSession } from "../services/session";
 
 // Feature grid copy — same content as before but now wrapped in a scroll
 // reveal and tilt-on-hover container.
@@ -64,6 +65,7 @@ function Reveal({ children, delay = 0, y = 18, className = "" }) {
 export default function Landing() {
   const heroRef = useRef(null);
   const reduced = useReducedMotion();
+  const session = useSession();
 
   // Mouse-tracked spotlight on the hero — sets CSS variables that the
   // gradient overlay reads.
@@ -119,12 +121,20 @@ export default function Landing() {
               RemedyQuest combines AI-guided therapeutic exercise, trusted doctor follow-up, and motivating rewards to help you move better every day.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/register" className="btn-primary px-7 py-4">
-                Start as a patient <ArrowRight size={17} />
-              </Link>
-              <Link to="/login?role=doctor" className="btn-soft px-7 py-4">
-                <Play size={17} /> Doctor login
-              </Link>
+              {session ? (
+                <Link to={homePathFor(session.user)} className="btn-primary px-7 py-4">
+                  Open my dashboard <ArrowRight size={17} />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn-primary px-7 py-4">
+                    Get started <ArrowRight size={17} />
+                  </Link>
+                  <Link to="/login" className="btn-soft px-7 py-4">
+                    <LogIn size={17} /> Log in
+                  </Link>
+                </>
+              )}
             </div>
             <div className="mt-9 grid max-w-xl grid-cols-3 gap-3">
               {heroMetrics.map(([value, label], index) => (

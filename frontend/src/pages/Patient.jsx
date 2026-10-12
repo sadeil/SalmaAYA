@@ -26,6 +26,7 @@ import {
   HeartPulse,
   History,
   Lock,
+  MessageCircle,
   Pause,
   Play,
   Rabbit,
@@ -41,19 +42,17 @@ import {
   WalletCards,
   Zap,
 } from "lucide-react";
-import {
-  exercises as initialExercises,
-  messages as seedMessages,
-  progressData,
-} from "../data/appData";
-import { CountUp, PageHeader, Progress, StatCard, Status } from "../components/UI";
+import { PageHeader, Progress, StatCard, Status } from "../components/UI";
+import { usePatientData } from "../components/PatientData";
 import { GuidedCameraPane } from "../components/GuidedCameraPane";
 import { getExerciseById } from "../exercises";
 import { useLanguage } from "../i18n/LanguageContext";
 import { api } from "../services/api";
+import { useSession } from "../services/session";
+import { EXERCISE_TEMPLATES } from "../../../shared/remedyCore.mjs";
 
-// Maps each exercise id from the daily plan to the rule file that knows how
-// to analyze that movement on camera. Exercises that don't have a matching
+// Maps each exercise template from the daily plan to the rule file that knows
+// how to analyze that movement on camera. Exercises that don't have a matching
 // rule simply don't expose the camera toggle — we'd rather be honest about
 // what we can actually score than fake feedback.
 const exerciseCameraRuleByPlanId = {
@@ -62,165 +61,270 @@ const exerciseCameraRuleByPlanId = {
   5: "backStretch",     // Posture reset
 };
 
+// The care-plan chat is Arabic, so exercises it creates carry Arabic names.
+// In the English UI show the matching template's English name instead.
+const ARABIC_TEXT = /[\u0600-\u06FF]/;
+function exerciseText(exercise, isArabic) {
+  const template = EXERCISE_TEMPLATES[exercise.templateId];
+  if (!isArabic && template && ARABIC_TEXT.test(exercise.name)) return { name: template.name, area: template.area };
+  return { name: exercise.name, area: exercise.area };
+}
+
 function todayLabel(isArabic) {
   return new Intl.DateTimeFormat(isArabic ? "ar-PS" : "en-GB", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 }
 
-function greeting() {
+function greeting(name, isArabic) {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning, Salma";
-  if (hour < 18) return "Good afternoon, Salma";
-  return "Good evening, Salma";
+  const first = String(name || "").split(/\s+/)[0];
+  if (isArabic) return hour < 12 ? `صباح الخير، ${first}` : `مساء الخير، ${first}`;
+  if (hour < 12) return `Good morning, ${first}`;
+  if (hour < 18) return `Good afternoon, ${first}`;
+  return `Good evening, ${first}`;
+}
+
+// Bilingual helper for strings with numbers or names in them; static copy
+// goes through the translation table instead.
+function useText() {
+  const { isArabic } = useLanguage();
+  return (en, ar) => (isArabic ? ar : en);
+}
+
+function cumulative(progress, total) {
+  let running = total - progress.reduce((sum, day) => sum + day.score, 0);
+  return progress.map((day) => {
+    running += day.score;
+    return Math.max(0, running);
+  });
+}
+
+function PageSkeleton() {
+  return (
+    <div className="space-y-5">
+      <div className="skeleton h-40" />
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((key) => <div key={key} className="skeleton h-40" />)}
+      </div>
+      <div className="skeleton h-72" />
+    </div>
+  );
 }
 
 export function PatientDashboard() {
   const { isArabic } = useLanguage();
+  const L = useText();
+  const session = useSession();
+  const { overview, error } = usePatientData();
+  const name = overview?.user.name ?? session?.user.name ?? "";
+
+  if (!overview) return error ? <p className="card text-sm font-bold text-rose-700">{error}</p> : <PageSkeleton />;
+
+  const { stats, plan, exercises, profile, progress } = overview;
+  const hasPlan = plan.total > 0;
+  const pointsTrend = cumulative(progress, stats.points);
+
   return (
     <>
       <PageHeader
         eyebrow={todayLabel(isArabic)}
-        title={greeting()}
-        description="Your body has shown up for you today. Let's return the favor."
+        title={greeting(name, isArabic)}
+        description={overview.isNew ? "Welcome to RemedyQuest. Let's set up your first care plan together." : "Your body has shown up for you today. Let's return the favor."}
         action={
-          <button className="btn-primary">
-            <Play size={16} /> Start today's exercises
-          </button>
+          <Link to={hasPlan ? "/patient/exercises" : "/patient/chat"} className="btn-primary">
+            {hasPlan ? <Play size={16} /> : <Bot size={16} />}
+            {hasPlan ? "Start today's exercises" : "Build my plan"}
+          </Link>
         }
       />
+
+      {overview.isNew && <WelcomeSteps />}
+
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Star}
           label="Current points"
-          value="82 pts"
-          note="+10 this week"
-          trend={[60, 65, 62, 70, 74, 78, 82]}
+          value={L(`${stats.points} pts`, `${stats.points} نقطة`)}
+          note={stats.weekPoints ? L(`+${stats.weekPoints} this week`, `+${stats.weekPoints} هذا الأسبوع`) : L("+5 per exercise", "+5 لكل تمرين")}
+          trend={stats.points ? pointsTrend : undefined}
         />
         <StatCard
           icon={Trophy}
           label="Current level"
-          value="Level 3"
-          note="18 pts to Level 4"
+          value={L(`Level ${stats.level}`, `المستوى ${stats.level}`)}
+          note={stats.nextLevelPoints == null ? L("Top level reached", "وصلت لأعلى مستوى") : L(`${stats.pointsToNext} pts to Level ${stats.level + 1}`, `${stats.pointsToNext} نقطة للمستوى ${stats.level + 1}`)}
           tone="purple"
-          trend={[1, 1, 2, 2, 2, 3, 3]}
         />
         <StatCard
           icon={Flame}
           label="Day streak"
-          value="12 days"
-          note="Personal best"
+          value={L(`${stats.streak} ${stats.streak === 1 ? "day" : "days"}`, `${stats.streak} ${stats.streak === 1 ? "يوم" : "أيام"}`)}
+          note={stats.streak ? L("Keep it going", "حافظ على الاستمرار") : L("Exercise today to start", "تمرّن اليوم لتبدأ")}
           tone="amber"
-          trend={[1, 3, 5, 7, 9, 11, 12]}
         />
         <StatCard
           icon={CircleDollarSign}
           label="Refund earned"
-          value="5 ILS"
-          note="12.5% returned"
+          value={L(`${stats.refundIls} ILS`, `${stats.refundIls} شيكل`)}
+          note={stats.refundIls ? L(`${overview.rewards.percent}% returned`, `تم استرداد ${overview.rewards.percent}%`) : L("Unlocks at Level 3", "يُفتح عند المستوى 3")}
           tone="blue"
         />
       </div>
+
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.4fr_.6fr]">
         <div className="card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <span className="pill bg-teal-50 text-teal-700">
-                <HeartPulse size={14} /> Today's care plan
-              </span>
-              <h2 className="mt-4 text-2xl font-extrabold">
-                Gentle back mobility
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                5 exercises · 25 minutes · Low impact
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-extrabold">
-                <CountUp value={40} />%
-              </p>
-              <p className="text-xs font-bold text-slate-400">
-                2 of 5 complete
-              </p>
-            </div>
-          </div>
-          <div className="mt-7">
-            <Progress value={40} />
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {initialExercises.slice(0, 4).map((e, i) => (
-              <motion.div
-                key={e.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * i }}
-                whileHover={{ y: -2 }}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 transition hover:border-teal-200 hover:shadow-card"
-              >
-                <span
-                  className={`grid h-10 w-10 place-items-center rounded-xl transition-transform group-hover:scale-110 ${e.color}`}
-                >
-                  {e.done ? (
-                    <Check size={17} />
-                  ) : (
-                    <span className="text-xs font-extrabold">{i + 1}</span>
-                  )}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold">{e.name}</p>
-                  <p className="truncate text-xs text-slate-400">
-                    {e.duration} · {e.area}
+          {hasPlan ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="pill bg-teal-50 text-teal-700">
+                    <HeartPulse size={14} /> Today's care plan
+                  </span>
+                  <h2 className="mt-4 text-2xl font-extrabold">{L("Your movement plan", "خطة الحركة الخاصة بك")}</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {L(`${plan.total} exercises · ${plan.minutes} minutes`, `${plan.total} تمارين · ${plan.minutes} دقيقة`)}
                   </p>
                 </div>
-                {!e.done && (
-                  <ArrowRight
-                    size={14}
-                    className="ms-auto text-slate-300 transition group-hover:translate-x-1 group-hover:text-teal-600"
-                  />
-                )}
-              </motion.div>
-            ))}
-          </div>
+                <div className="text-end">
+                  <p className="text-2xl font-extrabold">{plan.percent}%</p>
+                  <p className="text-xs font-bold text-slate-400">
+                    {L(`${plan.completed} of ${plan.total} complete`, `اكتمل ${plan.completed} من ${plan.total}`)}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-7">
+                <Progress value={plan.percent} />
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {exercises.slice(0, 4).map((e, i) => (
+                  <Link
+                    key={e.id}
+                    to="/patient/exercises"
+                    className="group flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 transition hover:border-teal-200 hover:shadow-card"
+                  >
+                    <span className={`grid h-10 w-10 place-items-center rounded-xl transition-transform group-hover:scale-110 ${e.color}`}>
+                      {e.done ? <Check size={17} /> : <span className="text-xs font-extrabold">{i + 1}</span>}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-extrabold">{exerciseText(e, isArabic).name}</p>
+                      <p className="truncate text-xs text-slate-400">{e.duration} · {exerciseText(e, isArabic).area}</p>
+                    </div>
+                    {!e.done && (
+                      <ArrowRight size={14} className="ms-auto text-slate-300 transition group-hover:translate-x-1 group-hover:text-teal-600" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              icon={CalendarDays}
+              title="No care plan yet"
+              text="Answer a few short questions with your AI assistant and it will suggest a gentle plan for you to approve."
+              action={<Link to="/patient/chat" className="btn-primary"><Bot size={16} /> Start with the assistant</Link>}
+            />
+          )}
         </div>
         <div className="card lux-dark relative flex flex-col overflow-hidden text-white">
           <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-teal-300/25 blur-3xl anim-float" />
-          <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-violet-400/15 blur-3xl" />
           <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-white/10 backdrop-blur">
             <Bot />
           </span>
-          <h3 className="relative mt-6 text-2xl font-extrabold">
-            How are you feeling today?
-          </h3>
+          <h3 className="relative mt-6 text-2xl font-extrabold">How are you feeling today?</h3>
           <p className="relative mt-3 text-sm leading-6 text-white/65">
             Tell your AI assistant about any changes before starting your plan.
           </p>
           <Link
             to="/patient/chat"
-            className="group relative mt-auto flex items-center justify-between rounded-2xl bg-white/10 p-4 text-sm font-extrabold transition hover:bg-white/15"
+            className="group relative mt-6 flex items-center justify-between rounded-2xl bg-white/10 p-4 text-sm font-extrabold transition hover:bg-white/15 xl:mt-auto"
           >
             Chat with AI
             <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
+
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_.4fr]">
-        <ProgressChart />
+        <ProgressChart data={progress} weekPoints={stats.weekPoints} />
         <div className="card">
-          <p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">
-            Health focus
-          </p>
-          <h3 className="mt-3 text-xl font-extrabold">Lower back tension</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Your reported discomfort is down from 6 to 4 this month.
-          </p>
-          <div className="mt-6">
-            <div className="mb-2 flex justify-between text-xs font-bold">
-              <span>Recovery confidence</span>
-              <span>72%</span>
-            </div>
-            <Progress value={72} color="bg-violet-500" />
+          <p className="text-xs font-extrabold uppercase tracking-[.16em] text-slate-400">Health focus</p>
+          <h3 className="mt-3 text-xl font-extrabold">{profile.problem ? L(profile.problem, translateProblem(profile.problem)) : L("Not set yet", "لم يُحدد بعد")}</h3>
+          <div className="mt-5 space-y-3 text-sm">
+            {[
+              ["Pain level", profile.painLevel != null ? `${profile.painLevel}/10` : "—"],
+              ["Daily time", profile.dailyTimeMinutes ? L(`${profile.dailyTimeMinutes} min`, `${profile.dailyTimeMinutes} دقيقة`) : "—"],
+              ["Exercises done", String(stats.exercisesCompleted)],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between border-b border-slate-100 pb-3 last:border-0">
+                <span className="text-slate-400">{label}</span>
+                <span className="font-extrabold" data-no-translate>{value}</span>
+              </div>
+            ))}
           </div>
+          {profile.painLevel == null && (
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Share how you feel with the assistant to personalise your plan.
+            </p>
+          )}
         </div>
       </div>
     </>
+  );
+}
+
+const PROBLEM_AR = {
+  "Lower back pain": "ألم أسفل الظهر",
+  "Neck stiffness": "تيبس الرقبة",
+  "Shoulder pain": "ألم الكتف",
+  "Joint pain": "ألم المفاصل",
+  "Posture correction": "تصحيح الوضعية",
+};
+
+function translateProblem(problem) {
+  return PROBLEM_AR[problem] ?? problem;
+}
+
+function WelcomeSteps() {
+  const steps = [
+    [Bot, "Tell the assistant how you feel", "A short chat about your pain, movement and time.", "/patient/chat"],
+    [CheckCircle2, "Approve your care plan", "Review the suggested exercises and add them to your day.", "/patient/chat"],
+    [Trophy, "Move, earn and level up", "Each completed exercise earns 5 points toward rewards.", "/patient/exercises"],
+  ];
+  return (
+    <section className="card mb-5 overflow-hidden p-0">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-[#f7f1e4]/70 via-white to-teal-50/60 px-6 py-5">
+        <p className="lux-eyebrow">Getting started</p>
+        <h2 className="mt-2 text-2xl font-extrabold">Three steps to your first plan</h2>
+      </div>
+      <ol className="grid gap-px bg-slate-100 md:grid-cols-3">
+        {steps.map(([Icon, title, text, to], index) => (
+          <li key={title} className="bg-white">
+            <Link to={to} className="group flex h-full gap-4 p-6 transition hover:bg-slate-50/70">
+              <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-teal-50 text-teal-700">
+                <Icon size={19} />
+                <span className="absolute -end-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-ink text-[10px] font-extrabold text-white">{index + 1}</span>
+              </span>
+              <span>
+                <span className="block font-extrabold">{title}</span>
+                <span className="mt-1 block text-sm leading-6 text-slate-500">{text}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function EmptyState({ icon: Icon, title, text, action }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+      <span className="grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-teal-50 to-[#f7f1e4] text-teal-700 shadow-inner">
+        <Icon size={26} />
+      </span>
+      <h3 className="mt-5 text-xl font-extrabold">{title}</h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{text}</p>
+      {action && <div className="mt-6">{action}</div>}
+    </div>
   );
 }
 
@@ -238,7 +342,9 @@ function ProgressChartTooltip({ active, payload, label }) {
   );
 }
 
-function ProgressChart() {
+function ProgressChart({ data, weekPoints }) {
+  const L = useText();
+  const empty = !data.some((day) => day.score > 0);
   return (
     <div className="card">
       <div className="mb-5 flex justify-between">
@@ -249,12 +355,12 @@ function ProgressChart() {
           <h3 className="mt-2 text-xl font-extrabold">Your week in motion</h3>
         </div>
         <span className="pill h-fit bg-teal-50 text-teal-700">
-          +<CountUp value={18} />%
+          {L(`${weekPoints} pts this week`, `${weekPoints} نقطة هذا الأسبوع`)}
         </span>
       </div>
-      <div className="h-64">
+      <div className="relative h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={progressData} margin={{ top: 10, right: 4, left: 4, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 10, right: 4, left: 4, bottom: 0 }}>
             <defs>
               <linearGradient id="score" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#20a88a" stopOpacity={0.45} />
@@ -262,16 +368,11 @@ function ProgressChart() {
               </linearGradient>
               <linearGradient id="scoreStroke" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#20a88a" />
-                <stop offset="100%" stopColor="#8e82d9" />
+                <stop offset="100%" stopColor="#c9a45c" />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8eeee" />
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#94a3b8", fontSize: 11 }}
-            />
+            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
             <Tooltip cursor={{ stroke: "#cbd5e1", strokeDasharray: "3 3" }} content={<ProgressChartTooltip />} />
             <Area
               type="monotone"
@@ -283,30 +384,48 @@ function ProgressChart() {
             />
           </AreaChart>
         </ResponsiveContainer>
+        {empty && (
+          <div className="pointer-events-none absolute inset-0 grid place-items-center">
+            <p className="rounded-2xl bg-white/90 px-4 py-2 text-sm font-bold text-slate-500 shadow-sm">
+              Complete an exercise to see your progress here.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export function ExerciseSchedule() {
-  const [items, setItems] = useState(initialExercises);
+  const { overview, error, setOverview } = usePatientData();
   const [activeExercise, setActiveExercise] = useState(null);
+  const [saveError, setSaveError] = useState("");
+  const [toast, setToast] = useState("");
   const { isArabic } = useLanguage();
-  const done = items.filter((x) => x.done).length;
-  const setDone = (id, value) =>
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, done: value } : item)),
-    );
+  const L = useText();
 
   useEffect(() => {
-    let active = true;
-    api.exercises()
-      .then((apiExercises) => active && setItems(apiExercises))
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (!toast) return undefined;
+    const timer = window.setTimeout(() => setToast(""), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  if (!overview) return error ? <p className="card text-sm font-bold text-rose-700">{error}</p> : <PageSkeleton />;
+
+  const items = overview.exercises;
+  const done = items.filter((x) => x.done).length;
+  const percent = items.length ? Math.round((done / items.length) * 100) : 0;
+
+  const setDone = async (id, value) => {
+    setSaveError("");
+    try {
+      const result = await api.setExerciseDone(id, value);
+      setOverview(result.overview);
+      if (result.awarded) setToast(L(`+${result.awarded} points earned`, `+${result.awarded} نقاط`));
+    } catch (apiError) {
+      setSaveError(apiError.message);
+    }
+  };
 
   return (
     <>
@@ -314,95 +433,104 @@ export function ExerciseSchedule() {
         eyebrow="Daily plan"
         title="Today's movement quest"
         description="Move gently and stop if an exercise causes sharp or unusual pain."
-        action={
+        action={items.length > 0 && (
           <span className="pill bg-teal-50 text-teal-700">
-            <Clock3 size={15} /> 25 minutes
+            <Clock3 size={15} /> {L(`${overview.plan.minutes} minutes`, `${overview.plan.minutes} دقيقة`)}
           </span>
-        }
+        )}
       />
-      <div className="card mb-5 flex flex-col gap-4 md:flex-row md:items-center">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-600">
-          <Target />
-        </span>
-        <div className="flex-1">
-          <div className="mb-2 flex justify-between text-sm font-extrabold">
-            <span>{isArabic ? `اكتمل ${done} من ${items.length} تمارين` : `${done} of ${items.length} exercises complete`}</span>
-            <span>{Math.round((done / items.length) * 100)}%</span>
-          </div>
-          <Progress value={(done / items.length) * 100} />
+      {items.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={CalendarDays}
+            title="Your plan is empty"
+            text="Your exercises appear here after you approve a plan with the AI assistant. It only takes a couple of minutes."
+            action={<Link to="/patient/chat" className="btn-primary"><Bot size={16} /> Build my plan</Link>}
+          />
         </div>
-        <span className="pill bg-amber-50 text-amber-700">+5 points each</span>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        {items.map((e, index) => (
-          <motion.div
-            layout
-            key={e.id}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: index * 0.05, ease: [0.45, 0, 0.18, 1] }}
-            whileHover={{ y: -4 }}
-            onMouseMove={(event) => {
-              const rect = event.currentTarget.getBoundingClientRect();
-              event.currentTarget.style.setProperty("--mx", `${event.clientX - rect.left}px`);
-              event.currentTarget.style.setProperty("--my", `${event.clientY - rect.top}px`);
-            }}
-            data-spotlight
-            className={`card group relative overflow-hidden p-6 ${e.done ? "border-teal-200 bg-teal-50/30" : ""}`}
-          >
-            <div className={`absolute inset-x-0 top-0 h-1 ${e.done ? "bg-teal-400" : "bg-gradient-to-r from-teal-400 via-violet-400 to-amber-300"}`} />
-            <div className="flex items-start justify-between">
-              <span
-                className={`grid h-12 w-12 place-items-center rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${e.color}`}
-              >
-                {e.done ? <CheckCircle2 /> : <Activity />}
-              </span>
-              <Status>{e.done ? "Completed" : "Not completed"}</Status>
+      ) : (
+        <>
+          <div className="card mb-5 flex flex-col gap-4 md:flex-row md:items-center">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-600">
+              <Target />
+            </span>
+            <div className="flex-1">
+              <div className="mb-2 flex justify-between text-sm font-extrabold">
+                <span>{L(`${done} of ${items.length} exercises complete`, `اكتمل ${done} من ${items.length} تمارين`)}</span>
+                <span>{percent}%</span>
+              </div>
+              <Progress value={percent} />
             </div>
-            <h3 className="mt-5 text-xl font-extrabold">{e.name}</h3>
-            <p className="mt-1 text-sm text-slate-500">{e.area}</p>
-            <div className="my-5 grid grid-cols-3 gap-2">
-              {[
-                [e.duration, "Duration"],
-                [e.sets, "Sets"],
-                [e.reps, "Reps"],
-              ].map(([v, l]) => (
-                <div
-                  key={l}
-                  className="rounded-2xl bg-slate-50 p-3 text-center transition group-hover:bg-white group-hover:shadow-sm"
-                >
-                  <p className="font-extrabold">{v}</p>
-                  <p className="text-[10px] font-bold uppercase text-slate-400">
-                    {l}
-                  </p>
+            <span className="pill bg-amber-50 text-amber-700">+5 points each</span>
+          </div>
+          {saveError && <p className="mb-5 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{saveError}</p>}
+          <div className="grid gap-5 lg:grid-cols-2">
+            {items.map((e, index) => (
+              <motion.div
+                layout
+                key={e.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: index * 0.05, ease: [0.45, 0, 0.18, 1] }}
+                whileHover={{ y: -4 }}
+                onMouseMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  event.currentTarget.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+                  event.currentTarget.style.setProperty("--my", `${event.clientY - rect.top}px`);
+                }}
+                data-spotlight
+                className={`card group relative overflow-hidden p-6 ${e.done ? "border-teal-200 bg-teal-50/30" : ""}`}
+              >
+                <div className={`absolute inset-x-0 top-0 h-1 ${e.done ? "bg-teal-400" : "bg-gradient-to-r from-teal-400 via-[#c9a45c] to-amber-300"}`} />
+                <div className="flex items-start justify-between">
+                  <span
+                    className={`grid h-12 w-12 place-items-center rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${e.color}`}
+                  >
+                    {e.done ? <CheckCircle2 /> : <Activity />}
+                  </span>
+                  <Status>{e.done ? "Completed" : "Not completed"}</Status>
                 </div>
-              ))}
-            </div>
-            <p className="text-xs leading-5 text-slate-500">
-              Move slowly through a comfortable range, breathe steadily, and
-              keep your posture relaxed.
-            </p>
-            <div className="mt-5 flex gap-2">
-              <button
-                onClick={() => setActiveExercise(e)}
-                className="btn-primary flex-1"
-              >
-                <Play size={16} /> {e.done ? "Do it again" : "Start exercise"}
-              </button>
-              {e.done && (
-                <button
-                  aria-label="Mark incomplete"
-                  title="Mark incomplete"
-                  onClick={() => setDone(e.id, false)}
-                  className="btn-soft px-4"
-                >
-                  <RotateCcw size={16} />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                <h3 className="mt-5 text-xl font-extrabold">{exerciseText(e, isArabic).name}</h3>
+                <p className="mt-1 text-sm text-slate-500">{exerciseText(e, isArabic).area}</p>
+                <div className="my-5 grid grid-cols-3 gap-2">
+                  {[
+                    [e.duration, "Duration"],
+                    [e.sets, "Sets"],
+                    [e.reps, "Reps"],
+                  ].map(([v, l]) => (
+                    <div
+                      key={l}
+                      className="rounded-2xl bg-slate-50 p-3 text-center transition group-hover:bg-white group-hover:shadow-sm"
+                    >
+                      <p className="font-extrabold">{v}</p>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">{l}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs leading-5 text-slate-500">
+                  Move slowly through a comfortable range, breathe steadily, and
+                  keep your posture relaxed.
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <button onClick={() => setActiveExercise(e)} className="btn-primary flex-1">
+                    <Play size={16} /> {e.done ? "Do it again" : "Start exercise"}
+                  </button>
+                  {e.done && (
+                    <button
+                      aria-label="Mark incomplete"
+                      title="Mark incomplete"
+                      onClick={() => setDone(e.id, false)}
+                      className="btn-soft px-4"
+                    >
+                      <RotateCcw size={16} />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </>
+      )}
       <AnimatePresence>
         {activeExercise && (
           <GuidedExercise
@@ -413,6 +541,19 @@ export function ExerciseSchedule() {
               setActiveExercise(null);
             }}
           />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            role="status"
+            className="fixed bottom-6 start-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-extrabold text-white shadow-2xl ring-1 ring-[#c9a45c]/40 rtl:translate-x-1/2"
+          >
+            <Star size={16} className="text-[#e6cf9b]" /> {toast}
+          </motion.div>
         )}
       </AnimatePresence>
     </>
@@ -448,7 +589,9 @@ const exerciseGuides = {
 };
 
 function GuidedExercise({ exercise, onClose, onComplete }) {
-  const guide = exerciseGuides[exercise.id];
+  const { isArabic } = useLanguage();
+  const templateId = exercise.templateId ?? exercise.id;
+  const guide = exerciseGuides[templateId] ?? exerciseGuides[5];
   const [playing, setPlaying] = useState(true);
   const [reps, setReps] = useState(1);
   const [set, setSet] = useState(1);
@@ -463,8 +606,8 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
   // Resolve the rule file for this plan exercise (or null if we don't support
   // it on camera yet). We look it up by the plan-side id, not by name, so
   // the UI stays in sync if a coach renames an exercise.
-  const cameraRule = exerciseCameraRuleByPlanId[exercise.id]
-    ? getExerciseById(exerciseCameraRuleByPlanId[exercise.id])
+  const cameraRule = exerciseCameraRuleByPlanId[templateId]
+    ? getExerciseById(exerciseCameraRuleByPlanId[templateId])
     : null;
 
   useEffect(() => {
@@ -539,8 +682,8 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
         )}
         <div className="flex flex-col p-6 md:p-8">
           <p className="text-xs font-extrabold uppercase tracking-[.18em] text-teal-600">Guided session</p>
-          <h2 className="mt-2 pe-10 text-3xl font-extrabold">{exercise.name}</h2>
-          <p className="mt-2 text-sm text-slate-500">{exercise.area} · {exercise.duration}</p>
+          <h2 className="mt-2 pe-10 text-3xl font-extrabold">{exerciseText(exercise, isArabic).name}</h2>
+          <p className="mt-2 text-sm text-slate-500">{exerciseText(exercise, isArabic).area} · {exercise.duration}</p>
           <div className="my-7">
             <div className="mb-2 flex justify-between text-xs font-extrabold">
               <span>Set {set} of {totalSets}</span>
@@ -766,7 +909,8 @@ function ExerciseDemonstration({ motionType, phase, playing, speed }) {
 }
 
 export function AIChat() {
-  const [messages, setMessages] = useState(seedMessages);
+  const { refresh } = usePatientData();
+  const [messages, setMessages] = useState([]);
   const [profile, setProfile] = useState(null);
   const [intake, setIntake] = useState({});
   const [draftPlan, setDraftPlan] = useState(null);
@@ -834,6 +978,7 @@ export function AIChat() {
     try {
       const payload = await api.sendPatientMessage(outgoing);
       setMessages((current) => [...current, ...(payload.messages ?? [])]);
+      if (payload.messages?.some((message) => message.planApplied)) refresh();
       setProfile(payload.profile ?? null);
       setIntake(payload.intake ?? {});
       setDraftPlan(payload.draftPlan ?? null);
@@ -988,7 +1133,7 @@ export function AIChat() {
             <h3 className="mt-5 text-lg font-extrabold">الخطة المقترحة</h3>
             <div className="mt-5 space-y-4 text-sm">
               {[
-                ["الملف", profile?.problem ?? "ألم أسفل الظهر"],
+                ["الملف", profile?.problem ? translateProblem(profile.problem) : "لم يُحدد"],
                 ["المشكلة", visibleIntake.currentProblem ?? "لم تتم الإجابة"],
                 ["المكان", visibleIntake.location ?? "لم تتم الإجابة"],
                 ["درجة الألم", visibleIntake.painLevel != null ? `${visibleIntake.painLevel} \u0645\u0646 10` : "لم تتم الإجابة"],
@@ -1157,15 +1302,15 @@ function ChatPlanPreview({ plan, onApprove }) {
 }
 const ShieldCheckIcon = () => <Lock size={17} />;
 
+const BADGE_ICONS = { streak: Flame, starter: Zap, level3: Trophy, hero: HeartPulse, consistency: Award, master: Star };
+
 export function Gamification() {
-  const badges = [
-    [Flame, "12-day streak", "Earned"],
-    [Zap, "Quick starter", "Earned"],
-    [Trophy, "Level three", "Earned"],
-    [HeartPulse, "Mobility hero", "Next"],
-    [Award, "Consistency pro", "Locked"],
-    [Star, "Quest master", "Locked"],
-  ];
+  const { overview, error } = usePatientData();
+  const L = useText();
+  if (!overview) return error ? <p className="card text-sm font-bold text-rose-700">{error}</p> : <PageSkeleton />;
+  const { stats, stages, badges, rewards } = overview;
+  const stageNames = ["Getting started", "First steps", "Mobility Builder", "Strength Seeker", "Quest Master"];
+
   return (
     <>
       <PageHeader
@@ -1173,27 +1318,33 @@ export function Gamification() {
         title="Your recovery, leveled up"
         description="Every completed exercise moves you closer to stronger habits and your next reward."
       />
-      <StageJourney />
+      <StageJourney stages={stages} levelProgress={stats.levelProgress} />
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_.42fr]">
         <div className="card lux-dark relative overflow-hidden p-8 text-white">
           <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl" />
-          <span className="pill bg-white/10 text-teal-100">
+          <span className="pill border border-[#c9a45c]/30 bg-white/5 text-[#e6cf9b]">
             <Gamepad2 size={15} /> Current quest
           </span>
-          <h2 className="mt-8 text-4xl font-extrabold">Stage 3</h2>
-          <p className="mt-2 text-white/50">Mobility Builder · 82 points</p>
+          <h2 className="mt-8 text-4xl font-extrabold">{L(`Stage ${stats.level}`, `المرحلة ${stats.level}`)}</h2>
+          <p className="mt-2 text-white/50">
+            {L(`${stageNames[stats.level - 1]} · ${stats.points} points`, `${stats.points} نقطة`)}
+          </p>
           <div className="mt-8">
             <div className="mb-3 flex justify-between text-xs font-bold">
-              <span>18 points to Stage 4</span>
-              <span>82%</span>
+              <span>
+                {stats.nextLevelPoints == null
+                  ? L("All stages complete", "اكتملت كل المراحل")
+                  : L(`${stats.pointsToNext} points to Stage ${stats.level + 1}`, `${stats.pointsToNext} نقطة للمرحلة ${stats.level + 1}`)}
+              </span>
+              <span>{stats.levelProgress}%</span>
             </div>
-            <Progress value={82} color="bg-teal-300" />
+            <Progress value={stats.levelProgress} color="bg-teal-300" />
           </div>
           <div className="mt-8 grid grid-cols-3 gap-3">
             {[
-              ["12", "Day streak"],
-              ["38", "Exercises"],
-              ["5 ILS", "Earned"],
+              [String(stats.streak), "Day streak"],
+              [String(stats.exercisesCompleted), "Exercises"],
+              [L(`${stats.refundIls} ILS`, `${stats.refundIls} شيكل`), "Earned"],
             ].map(([v, l]) => (
               <div key={l} className="rounded-2xl bg-white/10 p-4">
                 <p className="text-xl font-extrabold">{v}</p>
@@ -1206,61 +1357,62 @@ export function Gamification() {
           <span className="grid h-16 w-16 place-items-center rounded-full bg-amber-50 text-amber-500">
             <Gift size={30} />
           </span>
-          <p className="mt-5 text-xs font-extrabold uppercase tracking-widest text-slate-400">
-            Next reward
-          </p>
-          <h3 className="mt-2 text-xl font-extrabold">5 ILS refund</h3>
-          <p className="mt-2 text-sm text-slate-500">Unlock at 100 points</p>
+          <p className="mt-5 text-xs font-extrabold uppercase tracking-widest text-slate-400">Next reward</p>
+          {rewards.nextRefundLevel ? (
+            <>
+              <h3 className="mt-2 text-xl font-extrabold">{L("5 ILS refund", "استرداد 5 شيكل")}</h3>
+              <p className="mt-2 text-sm text-slate-500">
+                {L(`Unlock at ${stages[rewards.nextRefundLevel - 1].points} points`, `يُفتح عند ${stages[rewards.nextRefundLevel - 1].points} نقطة`)}
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="mt-2 text-xl font-extrabold">Mystery reward</h3>
+              <p className="mt-2 text-sm text-slate-500">{L("Unlock at 150 points", "يُفتح عند 150 نقطة")}</p>
+            </>
+          )}
         </div>
       </div>
       <h2 className="mb-5 mt-8 text-xl font-extrabold">Badge collection</h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {badges.map(([Icon, t, s], i) => (
-          <div
-            key={t}
-            className={`card flex items-center gap-4 ${s === "Locked" ? "opacity-50 grayscale" : ""}`}
-          >
-            <span
-              className={`grid h-14 w-14 place-items-center rounded-2xl ${i % 2 ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}
-            >
-              <Icon />
-            </span>
-            <div>
-              <p className="font-extrabold">{t}</p>
-              <p className="mt-1 text-xs font-bold text-slate-400">{s}</p>
+        {badges.map((badge, i) => {
+          const Icon = BADGE_ICONS[badge.key] ?? Star;
+          return (
+            <div key={badge.key} className={`card flex items-center gap-4 ${badge.earned ? "" : "opacity-50 grayscale"}`}>
+              <span className={`grid h-14 w-14 place-items-center rounded-2xl ${i % 2 ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}>
+                <Icon />
+              </span>
+              <div>
+                <p className="font-extrabold">{badge.key === "streak" && badge.earned ? L(badge.label, `سلسلة ${stats.streak} أيام`) : badge.label}</p>
+                <p className="mt-1 text-xs font-bold text-slate-400">{badge.earned ? "Earned" : "Locked"}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
 }
 
-function StageJourney() {
-  const stages = [
-    { number: 1, points: "15 pts", reward: "5 ILS", state: "complete" },
-    { number: 2, points: "40 pts", reward: "Badge", state: "complete" },
-    { number: 3, points: "75 pts", reward: "Current", state: "current" },
-    { number: 4, points: "100 pts", reward: "5 ILS", state: "locked" },
-    { number: 5, points: "150 pts", reward: "Mystery reward", state: "locked" },
-  ];
+function StageJourney({ stages, levelProgress }) {
+  const L = useText();
+  const completedCount = stages.filter((stage) => stage.state === "complete").length;
+  const rewardLabel = (stage) => {
+    if (stage.state === "current") return "Current";
+    if (stage.reward === "5 ILS") return L("5 ILS", "5 شيكل");
+    return stage.reward;
+  };
 
   return (
     <section className="card overflow-hidden p-0">
-      <div className="flex flex-col gap-3 border-b bg-gradient-to-r from-teal-50 via-white to-violet-50 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b bg-gradient-to-r from-teal-50 via-white to-[#f7f1e4]/70 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[.18em] text-teal-600">
-            Recovery stages
-          </p>
-          <h2 className="mt-2 text-2xl font-extrabold">
-            Your path to the next milestone
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Complete exercises and move through every stage.
-          </p>
+          <p className="lux-eyebrow">Recovery stages</p>
+          <h2 className="mt-2 text-2xl font-extrabold">Your path to the next milestone</h2>
+          <p className="mt-1 text-sm text-slate-500">Complete exercises and move through every stage.</p>
         </div>
         <span className="pill h-fit bg-white text-teal-700 shadow-card">
-          <Trophy size={15} /> 2 stages completed
+          <Trophy size={15} /> {L(`${completedCount} ${completedCount === 1 ? "stage" : "stages"} completed`, `${completedCount} مراحل مكتملة`)}
         </span>
       </div>
       <div className="no-scrollbar overflow-x-auto px-6 py-10">
@@ -1281,7 +1433,7 @@ function StageJourney() {
                     stage.state === "complete"
                       ? "border-teal-100 bg-teal-500 text-white shadow-teal-200/70"
                       : stage.state === "current"
-                        ? "border-teal-100 bg-ink text-white shadow-teal-300/70"
+                        ? "border-[#ead9b4] bg-ink text-white shadow-teal-300/70"
                         : "border-slate-100 bg-slate-50 text-slate-300 shadow-slate-100"
                   }`}
                 >
@@ -1291,12 +1443,8 @@ function StageJourney() {
                     <Lock size={24} />
                   ) : (
                     <>
-                      <span className="absolute top-3 text-[9px] font-extrabold uppercase tracking-widest text-teal-200">
-                        Stage
-                      </span>
-                      <span className="mt-3 text-3xl font-extrabold">
-                        {stage.number}
-                      </span>
+                      <span className="absolute top-3 text-[9px] font-extrabold uppercase tracking-widest text-[#e6cf9b]">Stage</span>
+                      <span className="mt-3 text-3xl font-extrabold">{stage.number}</span>
                     </>
                   )}
                   {stage.state === "current" && (
@@ -1305,14 +1453,10 @@ function StageJourney() {
                     </span>
                   )}
                 </motion.div>
-                <p
-                  className={`mt-5 text-sm font-extrabold ${stage.state === "locked" ? "text-slate-400" : "text-ink"}`}
-                >
-                  Stage {stage.number}
+                <p className={`mt-5 text-sm font-extrabold ${stage.state === "locked" ? "text-slate-400" : "text-ink"}`}>
+                  {L(`Stage ${stage.number}`, `المرحلة ${stage.number}`)}
                 </p>
-                <p className="mt-1 text-xs font-bold text-slate-400">
-                  {stage.points}
-                </p>
+                <p className="mt-1 text-xs font-bold text-slate-400">{L(`${stage.points} pts`, `${stage.points} نقطة`)}</p>
                 <span
                   className={`pill mt-3 ${
                     stage.state === "locked"
@@ -1323,7 +1467,7 @@ function StageJourney() {
                   }`}
                 >
                   <Gift size={12} />
-                  {stage.reward}
+                  {rewardLabel(stage)}
                 </span>
               </div>
               {index < stages.length - 1 && (
@@ -1331,12 +1475,7 @@ function StageJourney() {
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{
-                      width:
-                        stage.state === "complete"
-                          ? "100%"
-                          : stage.state === "current"
-                            ? "35%"
-                            : "0%",
+                      width: stage.state === "complete" ? "100%" : stage.state === "current" ? `${levelProgress}%` : "0%",
                     }}
                     transition={{ duration: 0.8, delay: index * 0.12 }}
                     className="h-full rounded-full bg-gradient-to-r from-teal-500 to-teal-300"
@@ -1352,6 +1491,14 @@ function StageJourney() {
 }
 
 export function Refunds() {
+  const { overview, error } = usePatientData();
+  const { isArabic } = useLanguage();
+  const L = useText();
+  if (!overview) return error ? <p className="card text-sm font-bold text-rose-700">{error}</p> : <PageSkeleton />;
+  const { rewards } = overview;
+  const formatDate = (value) => new Intl.DateTimeFormat(isArabic ? "ar-PS" : "en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
+  const ils = (value) => L(`${value} ILS`, `${value} شيكل`);
+
   return (
     <>
       <PageHeader
@@ -1359,130 +1506,128 @@ export function Refunds() {
         title="Consistency pays back"
         description="Reach milestones through your care plan to reclaim part of your subscription."
         action={
-          <button className="btn-primary">
-            <WalletCards size={17} /> Claim available refund
+          <button className="btn-primary disabled:cursor-not-allowed disabled:opacity-50" disabled={!rewards.refundIls}>
+            <WalletCards size={17} /> {rewards.refundIls ? "Claim available refund" : "No refund to claim yet"}
           </button>
         }
       />
       <div className="grid gap-5 sm:grid-cols-3">
-        <StatCard
-          icon={CircleDollarSign}
-          label="Subscription amount"
-          value="40 ILS"
-        />
+        <StatCard icon={CircleDollarSign} label="Subscription amount" value={ils(rewards.subscriptionIls)} />
         <StatCard
           icon={Gift}
           label="Earned refund"
-          value="5 ILS"
-          note="Available to claim"
+          value={ils(rewards.refundIls)}
+          note={rewards.refundIls ? "Available to claim" : "Unlocks at Level 3"}
           tone="amber"
         />
-        <StatCard
-          icon={WalletCards}
-          label="Remaining refundable"
-          value="35 ILS"
-          tone="purple"
-        />
+        <StatCard icon={WalletCards} label="Remaining refundable" value={ils(rewards.remainingIls)} tone="purple" />
       </div>
       <div className="card mt-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
-              Refund journey
-            </p>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Refund journey</p>
             <h3 className="mt-2 text-xl font-extrabold">
-              12.5% of subscription recovered
+              {L(`${rewards.percent}% of subscription recovered`, `تم استرداد ${rewards.percent}% من الاشتراك`)}
             </h3>
           </div>
-          <p className="text-2xl font-extrabold text-teal-600">5 / 40</p>
+          <p className="text-2xl font-extrabold text-teal-600" dir="ltr">{rewards.refundIls} / {rewards.subscriptionIls}</p>
         </div>
         <div className="mt-6">
-          <Progress value={12.5} />
+          <Progress value={rewards.percent} />
         </div>
       </div>
       <div className="card mt-5 overflow-x-auto">
         <h3 className="mb-5 text-xl font-extrabold">Reward history</h3>
-        <table className="w-full min-w-[650px] text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-slate-400">
-            <tr>
-              <th className="pb-4">Reward</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["Level 1 milestone", "May 16, 2026", "5 ILS", "Approved"],
-              ["Level 2 milestone", "June 8, 2026", "5 ILS", "Pending"],
-            ].map((r) => (
-              <tr key={r[0]} className="border-t">
-                <td className="py-5 font-extrabold">{r[0]}</td>
-                <td>{r[1]}</td>
-                <td className="font-bold">{r[2]}</td>
-                <td>
-                  <Status>{r[3]}</Status>
-                </td>
+        {rewards.history.length === 0 ? (
+          <EmptyState
+            icon={Gift}
+            title="No rewards yet"
+            text="Reach Level 3 to earn your first 5 ILS refund. Every completed exercise brings you closer."
+            action={<Link to="/patient/exercises" className="btn-soft">Go to my exercises</Link>}
+          />
+        ) : (
+          <table className="w-full min-w-[650px] text-start text-sm">
+            <thead className="text-xs uppercase tracking-wide text-slate-400">
+              <tr>
+                <th className="pb-4 text-start">Reward</th>
+                <th className="text-start">Date</th>
+                <th className="text-start">Amount</th>
+                <th className="text-start">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rewards.history.map((reward) => (
+                <tr key={reward.id} className="border-t">
+                  <td className="py-5 font-extrabold">{L(reward.label, reward.label.replace(/^Level (\d+) milestone$/, "إنجاز المستوى $1"))}</td>
+                  <td>{formatDate(reward.date)}</td>
+                  <td className="font-bold">{ils(reward.amount)}</td>
+                  <td><Status>{reward.status}</Status></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </>
   );
 }
 
-const careMessageStorageKey = "remedyquest-care-messages";
-const initialCareMessages = [
-  {
-    id: "doctor-welcome",
-    sender: "doctor",
-    text: "Hi Salma, your progress this week looks strong. How did the lower back mobility exercise feel?",
-  },
-  {
-    id: "patient-reply",
-    sender: "patient",
-    text: "Much better. I feel less tight after work now.",
-  },
+// Doctors keep the prototype conversation for now; patients talk to their
+// assigned doctor through the API and start with an empty thread.
+const doctorDemoMessages = [
+  { id: "doctor-welcome", sender: "doctor", text: "Hi Salma, your progress this week looks strong. How did the lower back mobility exercise feel?" },
+  { id: "patient-reply", sender: "patient", text: "Much better. I feel less tight after work now." },
 ];
 
-function loadCareMessages() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(careMessageStorageKey));
-    return Array.isArray(saved) && saved.length ? saved : initialCareMessages;
-  } catch {
-    return initialCareMessages;
-  }
-}
-
 export function MessagesPage() {
-  const [messages, setMessages] = useState(loadCareMessages);
+  const session = useSession();
+  const isDoctor = session?.user.role === "doctor";
+  const [messages, setMessages] = useState(isDoctor ? doctorDemoMessages : null);
   const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
   const messageListRef = useRef(null);
+  const contactName = isDoctor ? "Salma" : "Dr. Aya";
+  const mine = isDoctor ? "doctor" : "patient";
 
   useEffect(() => {
-    window.localStorage.setItem(careMessageStorageKey, JSON.stringify(messages));
-    messageListRef.current?.scrollTo({
-      top: messageListRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    if (isDoctor) return undefined;
+    let active = true;
+    api.careMessages()
+      .then((list) => active && setMessages(list))
+      .catch((apiError) => {
+        if (!active) return;
+        setMessages([]);
+        setError(apiError.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isDoctor]);
+
+  useEffect(() => {
+    messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  function sendMessage(event) {
+  async function sendMessage(event) {
     event.preventDefault();
     const text = draft.trim();
     if (!text) return;
-
-    setMessages((current) => [
-      ...current,
-      {
-        id: `patient-${Date.now()}`,
-        sender: "patient",
-        text,
-      },
-    ]);
     setDraft("");
+    setError("");
+    if (isDoctor) {
+      setMessages((current) => [...current, { id: `doctor-${Date.now()}`, sender: "doctor", text }]);
+      return;
+    }
+    try {
+      const saved = await api.sendCareMessage(text);
+      setMessages((current) => [...(current ?? []), saved]);
+    } catch (apiError) {
+      setDraft(text);
+      setError(apiError.message);
+    }
   }
+
+  const last = messages?.at(-1);
 
   return (
     <>
@@ -1492,36 +1637,30 @@ export function MessagesPage() {
         description="Stay connected with your doctor between reviews."
       />
       <div className="card grid min-h-[650px] overflow-hidden p-0 md:grid-cols-[280px_1fr]">
-        <aside className="border-r bg-slate-50/60 p-4">
-          <input className="field mb-4" placeholder="Search conversations" />
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-white p-3 shadow-card ring-1 ring-teal-100"
-          >
+        <aside className="border-b bg-slate-50/60 p-4 md:border-b-0 md:border-r">
+          <div className="rounded-2xl bg-white p-3 shadow-card ring-1 ring-teal-100">
             <div className="flex items-center gap-3">
-              <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-200 to-violet-100 font-extrabold text-violet-700 shadow-inner">
-                A
+              <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#f1e2bd] to-[#f7f1e4] font-extrabold text-[#8a6b2f] shadow-inner">
+                {contactName.replace(/^Dr\.\s*/, "")[0]}
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-extrabold">Dr. Aya</p>
-                <p className="truncate text-xs text-slate-400">
-                  Your plan looks good...
+                <p className="truncate text-sm font-extrabold" data-no-translate>{contactName}</p>
+                <p className="truncate text-xs text-slate-400" data-no-translate>
+                  {last ? last.text : "—"}
                 </p>
               </div>
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-teal-500 text-[10px] font-extrabold text-white">2</span>
             </div>
-          </motion.div>
+          </div>
         </aside>
         <section className="flex flex-col">
           <div className="flex items-center gap-3 border-b p-5">
-            <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-violet-100 font-extrabold text-violet-700">
-              A
+            <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-[#f7f1e4] font-extrabold text-[#8a6b2f]">
+              {contactName.replace(/^Dr\.\s*/, "")[0]}
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
             </span>
             <div>
-              <p className="font-extrabold">Dr. Aya</p>
+              <p className="font-extrabold" data-no-translate>{contactName}</p>
               <p className="flex items-center gap-1 text-xs text-teal-600">
                 <span className="h-2 w-2 rounded-full bg-teal-500 anim-pulse-glow" />
                 Usually replies within a day
@@ -1533,18 +1672,27 @@ export function MessagesPage() {
             aria-live="polite"
             className="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-slate-50/60 to-white p-5"
           >
-            {messages.map((message, index) => {
-              const fromPatient = message.sender === "patient";
+            {messages === null && <div className="skeleton h-16 w-2/3" />}
+            {messages?.length === 0 && (
+              <EmptyState
+                icon={MessageCircle}
+                title="No messages yet"
+                text="Say hello to your doctor or ask a question about your plan. They usually reply within a day."
+              />
+            )}
+            {messages?.map((message, index) => {
+              const fromMe = message.sender === mine;
               return (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.05, 0.2) }}
+                  data-no-translate
                   className={
-                    fromPatient
-                      ? "ml-auto max-w-md whitespace-pre-wrap rounded-3xl rounded-br-md bg-ink p-4 text-sm leading-6 text-white shadow-lg shadow-teal-900/10"
-                      : "max-w-md whitespace-pre-wrap rounded-3xl rounded-bl-md bg-white p-4 text-sm leading-6 shadow-card"
+                    fromMe
+                      ? "ms-auto max-w-md whitespace-pre-wrap rounded-3xl rounded-ee-md bg-ink p-4 text-sm leading-6 text-white shadow-lg shadow-teal-900/10"
+                      : "max-w-md whitespace-pre-wrap rounded-3xl rounded-es-md bg-white p-4 text-sm leading-6 shadow-card"
                   }
                 >
                   {message.text}
@@ -1553,6 +1701,7 @@ export function MessagesPage() {
             })}
           </div>
           <div className="border-t bg-white p-4">
+            {error && <p className="mb-3 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</p>}
             <form className="flex gap-2" onSubmit={sendMessage}>
               <input
                 className="field"

@@ -62,6 +62,20 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 900 },
   permissions: [],
 });
+// Form coach pages need a signed-in patient: log in as the demo patient and
+// hand the session to the browser before any page loads.
+const loginResponse = await fetch(`${baseURL}/api/auth/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: "salma@remedyquest.app", password: "Salma@2026" }),
+});
+if (!loginResponse.ok) {
+  console.error(`FAIL:\n  Demo patient login failed with HTTP ${loginResponse.status}`);
+  process.exit(1);
+}
+const session = await loginResponse.json();
+await context.addInitScript((value) => localStorage.setItem("rq-session", value), JSON.stringify(session));
+const authHeaders = { Authorization: `Bearer ${session.token}` };
 const page = await context.newPage();
 
 page.on("console", (message) => {
@@ -144,6 +158,7 @@ if (startCount !== expectedToggleEnabled.length) {
 
 // ----- 4. Backend session POST round-trips -----
 const post = await page.request.post(`${baseURL}/api/patient/sessions`, {
+  headers: authHeaders,
   data: {
     exerciseId: "armRaise",
     exerciseName: "Shoulder raise",
@@ -160,7 +175,7 @@ const saved = await post.json();
 if (saved.exerciseId !== "armRaise" || saved.totalReps !== 8) errors.push("session POST did not echo payload");
 if (saved.targetReps !== 5 || saved.completed !== true) errors.push("session POST did not persist target completion fields");
 
-const list = await page.request.get(`${baseURL}/api/patient/sessions`);
+const list = await page.request.get(`${baseURL}/api/patient/sessions`, { headers: authHeaders });
 const arr = await list.json();
 if (!Array.isArray(arr) || arr.length === 0) errors.push("session list empty after POST");
 

@@ -1,3 +1,4 @@
+import { clearSession, getSession } from "./session";
 import { staticRequest } from "./staticApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
@@ -27,8 +28,23 @@ async function parseBody(response) {
   return text ? { message: text } : null;
 }
 
+// An expired or unknown token means the session is gone: drop it so the
+// route guards send the user back to the login page.
+function handleUnauthorized(status, path) {
+  if (status === 401 && !path.startsWith("/auth/")) clearSession();
+}
+
 async function request(path, options = {}) {
-  if (STATIC_DEMO) return staticRequest(path, options);
+  const token = getSession()?.token ?? null;
+
+  if (STATIC_DEMO) {
+    try {
+      return await staticRequest(path, options, token);
+    } catch (error) {
+      handleUnauthorized(error.status, path);
+      throw new ApiError(error.message, { status: error.status, code: error.code, path });
+    }
+  }
 
   const id = requestId();
   const method = options.method || "GET";
@@ -45,12 +61,14 @@ async function request(path, options = {}) {
         Accept: "application/json",
         "Content-Type": "application/json",
         "X-Request-ID": id,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
     });
 
     const payload = await parseBody(response);
     if (!response.ok) {
+      handleUnauthorized(response.status, path);
       throw new ApiError(payload?.message || "Request failed", {
         code: payload?.code || "HTTP_ERROR",
         details: payload,
@@ -80,8 +98,13 @@ export const api = {
   health: () => request("/health"),
   login: (credentials) => request("/auth/login", { method: "POST", body: JSON.stringify(credentials) }),
   register: (payload) => request("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
+  me: () => request("/auth/me"),
+  logout: () => request("/auth/logout", { method: "POST" }),
   patientDashboard: () => request("/patient/dashboard"),
   exercises: () => request("/patient/exercises"),
+  setExerciseDone: (id, done) => request(`/patient/exercises/${id}/status`, { method: "POST", body: JSON.stringify({ done }) }),
+  careMessages: () => request("/patient/care-messages"),
+  sendCareMessage: (text) => request("/patient/care-messages", { method: "POST", body: JSON.stringify({ text }) }),
   patients: () => request("/doctor/patients"),
   patientMessages: () => request("/patient/messages"),
   sendPatientMessage: (text) => request("/patient/messages", { method: "POST", body: JSON.stringify({ text }) }),

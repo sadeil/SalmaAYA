@@ -1,5 +1,5 @@
 ﻿import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell, Bot, CalendarDays, Camera, ChevronDown, CircleDollarSign, Gamepad2, Home,
@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import Brand from "./Brand";
 import { LanguageToggle, useLanguage } from "../i18n/LanguageContext";
+import { api } from "../services/api";
+import { clearSession, homePathFor, useSession } from "../services/session";
+import { PatientDataProvider, usePatientData } from "./PatientData";
 
 const patientLinks = [
   ["/patient", "Overview", LayoutDashboard],
@@ -37,6 +40,15 @@ export function PublicNav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
+  const session = useSession();
+  const accountLinks = session ? (
+    <Link to={homePathFor(session.user)} className="btn-primary py-2.5">{t("My dashboard")}</Link>
+  ) : (
+    <>
+      <Link to="/login" className="btn-soft py-2.5">{t("Log in")}</Link>
+      <Link to="/register" className="btn-primary py-2.5">{t("Get started")}</Link>
+    </>
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -58,8 +70,7 @@ export function PublicNav() {
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <LanguageToggle />
-          <Link to="/login" className="btn-soft py-2.5">{t("Log in")}</Link>
-          <Link to="/register" className="btn-primary py-2.5">{t("Start your quest")}</Link>
+          {accountLinks}
         </div>
         <button onClick={() => setOpen(!open)} aria-label="Menu" className="grid h-10 w-10 place-items-center rounded-full border border-[#c9a45c]/30 bg-white text-ink md:hidden">
           {open ? <X /> : <Menu />}
@@ -74,8 +85,7 @@ export function PublicNav() {
             className="mx-auto mt-2 max-w-7xl rounded-3xl border border-white bg-white/95 p-4 shadow-soft backdrop-blur-xl md:hidden"
           >
             <LanguageToggle />
-            <Link to="/login" className="btn-soft mb-2 mt-3 w-full">{t("Log in")}</Link>
-            <Link to="/register" className="btn-primary w-full">{t("Start your quest")}</Link>
+            <div className="mt-3 grid gap-2">{accountLinks}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -114,18 +124,51 @@ function SidebarLink({ to, label, Icon, end, onClose }) {
   );
 }
 
+function initialsOf(name) {
+  return String(name || "?")
+    .replace(/^dr\.?\s+/i, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export function DashboardLayout({ role = "patient" }) {
+  const content = <DashboardShell role={role} />;
+  return role === "patient" ? <PatientDataProvider>{content}</PatientDataProvider> : content;
+}
+
+function DashboardShell({ role }) {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isArabic, t } = useLanguage();
   const location = useLocation();
   const links = role === "doctor" ? doctorLinks : role === "admin" ? adminLinks : patientLinks;
+  const session = useSession();
+  const navigate = useNavigate();
+  const { overview } = usePatientData();
+  const userName = session?.user?.name ?? "";
   const roleData = role === "doctor"
-    ? ["Dr. Aya", "Physiotherapist", Stethoscope]
+    ? [userName, "Physiotherapist", Stethoscope]
     : role === "admin"
-      ? ["Salma Admin", "Platform manager", ShieldCheck]
-      : ["Salma", "Patient · Level 3", UserRound];
+      ? [userName, "Platform manager", ShieldCheck]
+      : [userName, overview ? (isArabic ? `مريض · المستوى ${overview.stats.level}` : `Patient · Level ${overview.stats.level}`) : "Patient", UserRound];
   const RoleIcon = roleData[2];
+
+  const signOut = async (event) => {
+    event?.preventDefault();
+    try {
+      await api.logout();
+    } catch {
+      // The local session is cleared either way.
+    }
+    // Leave the guarded area first so the route guard doesn't bounce the
+    // signed-out user to the login page.
+    navigate("/", { replace: true });
+    clearSession();
+  };
 
   // Close mobile sidebar and avatar menu on route change.
   useEffect(() => {
@@ -181,7 +224,7 @@ export function DashboardLayout({ role = "patient" }) {
               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0b2624] bg-emerald-400" />
             </span>
             <div>
-              <p className="text-sm font-extrabold">{t(roleData[0])}</p>
+              <p className="text-sm font-extrabold" data-no-translate>{roleData[0]}</p>
               <p className="text-xs text-white/55">{t(roleData[1])}</p>
             </div>
           </div>
@@ -207,12 +250,13 @@ export function DashboardLayout({ role = "patient" }) {
             {t("Small movements build lasting recovery.")}
           </p>
         </div>
-        <Link
-          to="/"
-          className="relative mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/55 transition hover:bg-white/5 hover:text-white"
+        <button
+          type="button"
+          onClick={signOut}
+          className="relative mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 text-start text-sm font-bold text-white/55 transition hover:bg-white/5 hover:text-white"
         >
           <LogOut size={18} /> {t("Sign out")}
-        </Link>
+        </button>
       </aside>
 
       <main className="rq-main lg:pl-72">
@@ -256,7 +300,7 @@ export function DashboardLayout({ role = "patient" }) {
                 className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-card transition hover:shadow-soft"
               >
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#e6cf9b] to-[#b8924a] text-xs font-extrabold text-[#0b2624] shadow-inner">
-                  {roleData[0].split(" ").map((part) => part[0]).join("").slice(0, 2)}
+                  {initialsOf(roleData[0])}
                 </span>
                 <ChevronDown
                   size={15}
@@ -273,15 +317,15 @@ export function DashboardLayout({ role = "patient" }) {
                     className="absolute end-0 mt-2 w-56 origin-top-right overflow-hidden rounded-2xl border border-white bg-white/95 shadow-soft backdrop-blur-xl"
                   >
                     <div className="border-b border-slate-100 px-4 py-3">
-                      <p className="text-sm font-extrabold">{t(roleData[0])}</p>
-                      <p className="text-xs text-slate-500">{t(roleData[1])}</p>
+                      <p className="text-sm font-extrabold" data-no-translate>{roleData[0]}</p>
+                      <p className="truncate text-xs text-slate-500">{session?.user?.email}</p>
                     </div>
                     <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 hover:text-ink">
                       <Home size={15} /> {t("Back to home")}
                     </Link>
-                    <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50">
+                    <button type="button" onClick={signOut} className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-start text-sm font-bold text-rose-600 transition hover:bg-rose-50">
                       <LogOut size={15} /> {t("Sign out")}
-                    </Link>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

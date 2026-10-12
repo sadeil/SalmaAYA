@@ -16,6 +16,7 @@ import {
 } from "../utils/visibilityCheck";
 import { createFeedbackStabilizer } from "../utils/smoothing";
 import { api } from "../services/api";
+import { usePatientData } from "../components/PatientData";
 
 // Calibration must run for at least this long, even if the rule file says it's
 // ready earlier — gives the user a moment to settle.
@@ -67,6 +68,7 @@ function getExerciseSnapshot(exercise, exerciseState) {
 }
 
 export default function ExerciseCamera() {
+  const { refresh: refreshOverview } = usePatientData();
   const cameraRef = useRef(null);
   const landmarkerRef = useRef(null);
   const rafRef = useRef(null);
@@ -271,11 +273,12 @@ export default function ExerciseCamera() {
     try {
       await api.saveSession(payload);
       setSaveStatus("saved");
+      refreshOverview();
     } catch (err) {
       console.error(err);
       setSaveStatus("error");
     }
-  }, [exercise, elapsedMs]);
+  }, [exercise, elapsedMs, refreshOverview]);
 
   const startSession = useCallback(async () => {
     if (!exercise) return;

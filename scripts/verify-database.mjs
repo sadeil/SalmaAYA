@@ -28,10 +28,12 @@ async function waitForServer() {
   throw new Error("Backend server did not start.");
 }
 
+let token = null;
+
 async function post(path, data) {
   const response = await fetch(`${baseURL}/api${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error(`${path} failed with HTTP ${response.status}`);
@@ -56,6 +58,15 @@ async function findFreePort() {
 try {
   await waitForServer();
 
+  const registered = await post("/auth/register", {
+    name: "Database Check",
+    email: `db.check.${Date.now()}@example.com`,
+    password: "db-check-2026",
+    problem: "Neck stiffness",
+    time: "20 minutes",
+  });
+  token = registered.token;
+
   const headFollowUp = await post("/patient/messages", { text: "الرأس" });
   if (!headFollowUp.messages?.[0]?.text?.includes("الجبهة")) {
     throw new Error("Head complaint did not receive a tailored location question.");
@@ -73,30 +84,12 @@ try {
     mistakes: {},
   });
 
-  for (const text of [
-    "my neck is stiff today",
-    "left side of neck",
-    "3",
-    "none",
-    "one week",
-    "15",
-    "pain relief",
-    "easy",
-  ]) {
+  for (const text of ["my neck is stiff today", "left side of neck", "3", "none", "one week", "15", "pain relief", "easy"]) {
     await post("/patient/messages", { text });
   }
   await post("/patient/messages", { text: "approve" });
   await post("/patient/messages", { text: "من جديد" });
-  for (const text of [
-    "ألم في الرقبة",
-    "الجهة اليمنى من الرقبة",
-    "4",
-    "لا يوجد",
-    "منذ أسبوع",
-    "10",
-    "تخفيف الألم",
-    "سهل",
-  ]) {
+  for (const text of ["ألم في الرقبة", "الجهة اليمنى من الرقبة", "4", "لا يوجد", "منذ أسبوع", "10", "تخفيف الألم", "سهل"]) {
     await post("/patient/messages", { text });
   }
   await post("/patient/messages", { text: "موافق" });
@@ -104,35 +97,45 @@ try {
 
   const raw = await readFile(testDatabasePath, "utf8");
   const db = JSON.parse(raw);
+  const user = db.users.find((item) => item.id === registered.user.id);
+  const record = db.patients?.[registered.user.id];
 
-  if (!Array.isArray(db.formCheckSessions) || db.formCheckSessions.length < 1) {
+  if (!user || !String(user.passwordHash).startsWith("scrypt$") || raw.includes("db-check-2026")) {
+    throw new Error("Database did not store a hashed password for the new patient.");
+  }
+  if (!db.users.some((item) => item.email === "salma@remedyquest.app") || !db.users.some((item) => item.email === "aya@remedyquest.app")) {
+    throw new Error("Database is missing the demo accounts.");
+  }
+  if (!record) throw new Error("Database did not create a patient record.");
+  if (!Array.isArray(record.formCheckSessions) || record.formCheckSessions.length < 1) {
     throw new Error("Database did not persist form check sessions.");
   }
-  if (!Array.isArray(db.chatConversations) || db.chatConversations.length !== 1) {
+  if (record.points !== 5 || record.streak !== 1) {
+    throw new Error(`Completed camera session did not award points (points ${record.points}, streak ${record.streak}).`);
+  }
+  if (!Array.isArray(record.chat?.conversations) || record.chat.conversations.length !== 1) {
     throw new Error("Database did not persist the completed conversation.");
   }
-  const archivedMessages = db.chatConversations[0].messages;
-  if (!Array.isArray(archivedMessages) || !archivedMessages.some((message) => message.text?.includes("تمت الموافقة"))) {
+  const archivedMessages = record.chat.conversations[0].messages;
+  if (!archivedMessages.some((message) => message.text?.includes("تمت الموافقة"))) {
     throw new Error("Database did not persist chatbot messages.");
   }
   if (!archivedMessages.some((message) => message.text === "موافق")) {
     throw new Error("Database did not persist Arabic chatbot approval.");
   }
-  if (db.messages.length !== 1 || db.messages[0].from !== "ai") {
-    throw new Error("Database did not reset the active conversation after ending it.");
+  if (record.chat.messages.length !== 1 || record.chat.messages[0].from !== "ai" || !record.chat.messages[0].text.includes("Database")) {
+    throw new Error("Database did not reset the active conversation (with the patient's name) after ending it.");
   }
-  if (!Array.isArray(db.exercises) || !db.exercises.some((exercise) => exercise.name === "تمرين الرقبة")) {
-    throw new Error("Database did not persist approved chat exercises.");
+  const neckCount = record.exercises.filter((exercise) => exercise.name === "تمرين الرقبة").length;
+  if (neckCount < 2) throw new Error("Database did not save the approved neck plan exercises.");
+  if (!record.exercises.every((exercise) => exercise.templateId)) {
+    throw new Error("Approved exercises are missing their guide template.");
   }
-  const neckMobilityCount = db.exercises.filter((exercise) => exercise.name === "تمرين الرقبة").length;
-  if (neckMobilityCount < 2) {
-    throw new Error("Database did not save the Arabic neck plan exercises.");
-  }
-  if (!db.patientProfile?.name || !db.chatCareState) {
-    throw new Error("Database is missing patient profile or chatbot state.");
-  }
-  if (db.chatCareState.draftPlan !== null) {
-    throw new Error("Database did not clear chatbot draft plan after approval.");
+  if (record.chat.draftPlan !== null) throw new Error("Database did not clear chatbot draft plan after approval.");
+
+  const salma = db.patients[db.users.find((item) => item.email === "salma@remedyquest.app").id];
+  if (salma.points !== 82 || salma.exercises.length !== 5) {
+    throw new Error("Another patient's activity changed the demo patient's data.");
   }
 
   console.log("Database persistence verified.");

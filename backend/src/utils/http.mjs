@@ -1,6 +1,6 @@
 export function jsonHeaders() {
   return {
-    "Access-Control-Allow-Headers": "Content-Type, X-Request-ID",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Request-ID",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
     "Access-Control-Allow-Origin": process.env.CORS_ORIGIN || "*",
     "Content-Type": "application/json; charset=utf-8",

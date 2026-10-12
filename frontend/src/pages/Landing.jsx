@@ -107,7 +107,7 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15 }}
-              className="pill mb-6 bg-white/80 text-teal-700 shadow-card backdrop-blur"
+              className="pill mb-6 border border-[#c9a45c]/30 bg-white/80 text-[#8a6b2f] shadow-card backdrop-blur"
             >
               <Sparkles size={14} /> A smarter path to feeling better
             </motion.span>
@@ -163,7 +163,7 @@ export default function Landing() {
             transition={{ delay: 0.15, duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
             className="relative mx-auto w-full max-w-xl"
           >
-            <div className="hero-device-glow rounded-[3rem] bg-ink p-5">
+            <div className="hero-device-glow lux-dark rounded-[3rem] p-5">
               <div className="soft-scan rounded-[2.2rem] bg-gradient-to-br from-[#ecfbf7] via-white to-[#f4f0ff] p-6">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
@@ -253,15 +253,13 @@ export default function Landing() {
 
         {/* Trusted partners marquee */}
         <div className="relative mx-auto mt-20 max-w-6xl">
-          <p className="mb-4 text-center text-[10px] font-extrabold uppercase tracking-[.32em] text-slate-400">
-            Trusted by therapy partners
-          </p>
+          <p className="mb-5 text-center"><span className="lux-eyebrow">Trusted by therapy partners</span></p>
           <div className="mask-fade-l mask-fade-r relative overflow-hidden">
             <div className="flex w-max gap-12 anim-marquee">
               {[...trustedLogos, ...trustedLogos].map((label, index) => (
                 <span
                   key={`${label}-${index}`}
-                  className="whitespace-nowrap text-sm font-extrabold uppercase tracking-[.2em] text-slate-300"
+                  className="font-display whitespace-nowrap text-lg italic text-slate-400/80"
                 >
                   {label}
                 </span>
@@ -335,11 +333,11 @@ export default function Landing() {
       {/* ============= SAFETY CTA ============= */}
       <section id="safety" className="px-6 py-24">
         <Reveal>
-          <div className="relative mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 overflow-hidden rounded-[3rem] bg-gradient-to-br from-ink to-teal-700 p-8 text-white md:flex-row md:p-14">
+          <div className="relative mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 overflow-hidden rounded-[3rem] lux-dark p-8 text-white md:flex-row md:p-14">
             <div className="pointer-events-none absolute -left-20 -top-20 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl anim-float" />
             <div className="pointer-events-none absolute -bottom-32 -right-10 h-80 w-80 rounded-full bg-violet-400/15 blur-3xl" />
             <div className="relative max-w-xl">
-              <span className="pill bg-white/10 text-teal-100">
+              <span className="pill border border-[#c9a45c]/30 bg-white/5 text-[#e6cf9b]">
                 <ShieldCheck size={15} /> Safety comes first
               </span>
               <h2 className="mt-5 text-3xl font-extrabold md:text-4xl">
@@ -349,7 +347,7 @@ export default function Landing() {
                 RemedyQuest provides general therapeutic exercise guidance and supports doctor follow-up. It does not replace an examination by a doctor or physical therapist.
               </p>
             </div>
-            <Link to="/register" className="btn-soft relative shrink-0 border-white/20 bg-white/10 text-white hover:border-white hover:text-white">
+            <Link to="/register" className="btn-soft relative shrink-0 border-[#c9a45c]/40 bg-white/5 text-white hover:border-[#e6cf9b] hover:text-white">
               Begin safely <ArrowRight size={17} />
             </Link>
           </div>

@@ -311,7 +311,7 @@ function AuthShell({ children, title, subtitle, wide = false }) {
   return (
     <div className="relative min-h-screen bg-mist p-4 lg:grid lg:grid-cols-[.8fr_1.2fr] lg:p-0">
       <div className="absolute end-4 top-4 z-20"><LanguageToggle /></div>
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-ink via-ink to-teal-700 p-12 text-white lg:flex lg:flex-col">
+      <div className="relative hidden overflow-hidden lux-dark p-12 text-white lg:flex lg:flex-col">
         <div className="absolute -right-20 top-20 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl anim-float" />
         <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-violet-400/15 blur-3xl" />
         <Brand light />

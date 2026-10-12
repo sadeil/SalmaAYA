@@ -48,7 +48,7 @@ export function PublicNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
       <nav
-        className={`mx-auto flex max-w-7xl items-center justify-between rounded-[1.4rem] border bg-white/85 px-5 py-3 backdrop-blur-xl transition ${scrolled ? "border-white shadow-soft" : "border-white/80 shadow-card"}`}
+        className={`mx-auto flex max-w-7xl items-center justify-between rounded-full border bg-white/80 py-2.5 pe-2.5 ps-4 backdrop-blur-xl transition duration-500 ${scrolled ? "border-[#c9a45c]/25 shadow-soft" : "border-white/80 shadow-card"}`}
       >
         <Brand />
         <div className="hidden items-center gap-8 text-sm font-bold text-slate-600 md:flex">
@@ -61,7 +61,7 @@ export function PublicNav() {
           <Link to="/login" className="btn-soft py-2.5">{t("Log in")}</Link>
           <Link to="/register" className="btn-primary py-2.5">{t("Start your quest")}</Link>
         </div>
-        <button onClick={() => setOpen(!open)} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 md:hidden">
+        <button onClick={() => setOpen(!open)} aria-label="Menu" className="grid h-10 w-10 place-items-center rounded-full border border-[#c9a45c]/30 bg-white text-ink md:hidden">
           {open ? <X /> : <Menu />}
         </button>
       </nav>
@@ -100,12 +100,12 @@ function SidebarLink({ to, label, Icon, end, onClose }) {
           {isActive && (
             <motion.span
               layoutId="sidebar-active-rail"
-              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 shadow-lg shadow-black/20"
+              className="absolute inset-0 rounded-2xl bg-white/[.09] shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_0_0_1px_rgba(201,164,92,.22)] before:absolute before:inset-y-2.5 before:start-0 before:w-[3px] before:rounded-full before:bg-gradient-to-b before:from-[#e6cf9b] before:to-[#b8924a]"
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
             />
           )}
           <span className="relative flex items-center gap-3">
-            <Icon size={18} className="transition-transform group-hover:scale-110" />
+            <Icon size={18} className={`transition-transform group-hover:scale-110 ${isActive ? "text-[#e6cf9b]" : ""}`} />
             {t(label)}
           </span>
         </span>
@@ -124,7 +124,7 @@ export function DashboardLayout({ role = "patient" }) {
     ? ["Dr. Aya", "Physiotherapist", Stethoscope]
     : role === "admin"
       ? ["Salma Admin", "Platform manager", ShieldCheck]
-      : ["Salma", "Patient آ· Level 3", UserRound];
+      : ["Salma", "Patient · Level 3", UserRound];
   const RoleIcon = roleData[2];
 
   // Close mobile sidebar and avatar menu on route change.
@@ -156,13 +156,13 @@ export function DashboardLayout({ role = "patient" }) {
   }, [menuOpen]);
 
   return (
-    <div className="min-h-screen bg-mist">
+    <div className="min-h-screen">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-extrabold focus:text-teal-700 focus:shadow-card">
         Skip to content
       </a>
 
       <aside
-        className={`rq-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-ink p-5 text-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : isArabic ? "translate-x-full" : "-translate-x-full"}`}
+        className={`rq-sidebar lux-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col p-5 text-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : isArabic ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div className="pointer-events-none absolute -left-20 top-1/4 h-64 w-64 rounded-full bg-teal-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -right-24 bottom-10 h-72 w-72 rounded-full bg-violet-400/10 blur-3xl" />
@@ -176,9 +176,9 @@ export function DashboardLayout({ role = "patient" }) {
 
         <div className="relative my-7 rounded-3xl border border-white/10 bg-white/[.06] p-4 shadow-inner backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-black/20">
+            <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#e6cf9b] to-[#b8924a] text-[#0b2624] shadow-lg shadow-black/30">
               <RoleIcon size={20} />
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-ink bg-emerald-400" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0b2624] bg-emerald-400" />
             </span>
             <div>
               <p className="text-sm font-extrabold">{t(roleData[0])}</p>
@@ -200,8 +200,8 @@ export function DashboardLayout({ role = "patient" }) {
           ))}
         </nav>
 
-        <div className="relative mt-auto rounded-3xl border border-white/10 bg-gradient-to-br from-teal-500/30 to-violet-400/20 p-4">
-          <Sparkles className="mb-3 text-teal-100" />
+        <div className="relative mt-auto rounded-3xl border border-[#c9a45c]/25 bg-gradient-to-br from-[#c9a45c]/15 via-white/[.04] to-teal-400/10 p-4">
+          <Sparkles className="mb-3 text-[#e6cf9b]" />
           <p className="text-sm font-extrabold">{t("Keep showing up")}</p>
           <p className="mt-1 text-xs leading-5 text-white/60">
             {t("Small movements build lasting recovery.")}
@@ -216,7 +216,7 @@ export function DashboardLayout({ role = "patient" }) {
       </aside>
 
       <main className="rq-main lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/80 bg-mist/80 px-4 shadow-[0_8px_30px_rgba(23,58,58,.03)] backdrop-blur-xl md:px-8">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#0d2a28]/[.06] bg-[#f6f7f3]/80 px-4 backdrop-blur-xl md:px-8">
           <button
             onClick={() => setOpen(true)}
             className="grid h-11 w-11 place-items-center rounded-2xl bg-white shadow-card lg:hidden"
@@ -225,10 +225,10 @@ export function DashboardLayout({ role = "patient" }) {
             <Menu />
           </button>
           <div className="hidden lg:block">
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-400">
+            <p className="lux-eyebrow !text-[10px]">
               {t(`${role} space`)}
             </p>
-            <p className="text-sm font-extrabold capitalize">
+            <p className="font-display text-lg font-semibold capitalize">
               {t(links.find(([to]) => to === location.pathname)?.[1] || "RemedyQuest")}
             </p>
           </div>
@@ -255,7 +255,7 @@ export function DashboardLayout({ role = "patient" }) {
                 aria-haspopup="menu"
                 className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-card transition hover:shadow-soft"
               >
-                <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-teal-200 to-teal-400 text-xs font-extrabold text-teal-900 shadow-inner">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#e6cf9b] to-[#b8924a] text-xs font-extrabold text-[#0b2624] shadow-inner">
                   {roleData[0].split(" ").map((part) => part[0]).join("").slice(0, 2)}
                 </span>
                 <ChevronDown
@@ -313,7 +313,7 @@ export function DashboardLayout({ role = "patient" }) {
 export function Footer() {
   const { t } = useLanguage();
   return (
-    <footer className="relative overflow-hidden bg-ink px-6 py-12 text-white">
+    <footer className="lux-footer relative overflow-hidden px-6 py-14 text-white">
       <div className="absolute -bottom-24 end-10 h-56 w-56 rounded-full bg-teal-500/10 blur-3xl" />
       <div className="absolute -top-20 start-10 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
       <div className="relative mx-auto flex max-w-7xl flex-col justify-between gap-6 md:flex-row md:items-center">
@@ -321,7 +321,7 @@ export function Footer() {
         <p className="max-w-md text-sm leading-6 text-white/55">
           {t("General therapeutic exercise guidance. RemedyQuest does not replace professional medical advice.")}
         </p>
-        <p className="text-xs text-white/40">آ© 2026 RemedyQuest</p>
+        <p className="text-xs text-white/40">© 2026 RemedyQuest</p>
       </div>
     </footer>
   );

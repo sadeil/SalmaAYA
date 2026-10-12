@@ -62,12 +62,24 @@ const exerciseCameraRuleByPlanId = {
   5: "backStretch",     // Posture reset
 };
 
+function todayLabel(isArabic) {
+  return new Intl.DateTimeFormat(isArabic ? "ar-PS" : "en-GB", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+}
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning, Salma";
+  if (hour < 18) return "Good afternoon, Salma";
+  return "Good evening, Salma";
+}
+
 export function PatientDashboard() {
+  const { isArabic } = useLanguage();
   return (
     <>
       <PageHeader
-        eyebrow="Friday, 12 June"
-        title="Good morning, Salma"
+        eyebrow={todayLabel(isArabic)}
+        title={greeting()}
         description="Your body has shown up for you today. Let's return the favor."
         action={
           <button className="btn-primary">
@@ -118,7 +130,7 @@ export function PatientDashboard() {
                 Gentle back mobility
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                5 exercises آ· 25 minutes آ· Low impact
+                5 exercises · 25 minutes · Low impact
               </p>
             </div>
             <div className="text-right">
@@ -155,7 +167,7 @@ export function PatientDashboard() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-extrabold">{e.name}</p>
                   <p className="truncate text-xs text-slate-400">
-                    {e.duration} آ· {e.area}
+                    {e.duration} · {e.area}
                   </p>
                 </div>
                 {!e.done && (
@@ -168,7 +180,7 @@ export function PatientDashboard() {
             ))}
           </div>
         </div>
-        <div className="card relative flex flex-col overflow-hidden bg-gradient-to-br from-ink to-teal-700 text-white">
+        <div className="card lux-dark relative flex flex-col overflow-hidden text-white">
           <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-teal-300/25 blur-3xl anim-float" />
           <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-violet-400/15 blur-3xl" />
           <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-white/10 backdrop-blur">
@@ -528,7 +540,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
         <div className="flex flex-col p-6 md:p-8">
           <p className="text-xs font-extrabold uppercase tracking-[.18em] text-teal-600">Guided session</p>
           <h2 className="mt-2 pe-10 text-3xl font-extrabold">{exercise.name}</h2>
-          <p className="mt-2 text-sm text-slate-500">{exercise.area} آ· {exercise.duration}</p>
+          <p className="mt-2 text-sm text-slate-500">{exercise.area} · {exercise.duration}</p>
           <div className="my-7">
             <div className="mb-2 flex justify-between text-xs font-extrabold">
               <span>Set {set} of {totalSets}</span>
@@ -1163,13 +1175,13 @@ export function Gamification() {
       />
       <StageJourney />
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_.42fr]">
-        <div className="card relative overflow-hidden bg-gradient-to-br from-ink to-teal-700 p-8 text-white">
+        <div className="card lux-dark relative overflow-hidden p-8 text-white">
           <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-teal-300/20 blur-3xl" />
           <span className="pill bg-white/10 text-teal-100">
             <Gamepad2 size={15} /> Current quest
           </span>
           <h2 className="mt-8 text-4xl font-extrabold">Stage 3</h2>
-          <p className="mt-2 text-white/50">Mobility Builder آ· 82 points</p>
+          <p className="mt-2 text-white/50">Mobility Builder · 82 points</p>
           <div className="mt-8">
             <div className="mb-3 flex justify-between text-xs font-bold">
               <span>18 points to Stage 4</span>

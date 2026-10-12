@@ -370,6 +370,8 @@ const translations = {
   ,"The camera is being used by another app. Close it and tap Try again.": "الكاميرا مستخدمة من تطبيق آخر. أغلقه ثم اضغط حاول مرة أخرى."
   ,"Could not start the camera.": "تعذّر تشغيل الكاميرا."
   ,"Form coach": "مدرب الحركة"
+  ,"Good evening, Salma": "مساء الخير، سلمى"
+  ,"Good afternoon, Salma": "مساء الخير، سلمى"
   ,"Form check": "فحص الحركة"
   ,"AI exercise form coach": "مدرب الحركة الذكي"
 };

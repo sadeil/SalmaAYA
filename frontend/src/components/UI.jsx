@@ -29,13 +29,12 @@ export function PageHeader({ eyebrow, title, description, action }) {
       data-spotlight
       className="card relative mb-8 flex flex-col justify-between gap-4 overflow-hidden p-5 md:flex-row md:items-end md:p-7"
     >
-      <div className="pointer-events-none absolute -end-10 -top-16 h-44 w-44 rounded-full bg-teal-200/60 blur-3xl motion-glow" />
+      <div className="pointer-events-none absolute -end-10 -top-16 h-44 w-44 rounded-full bg-[#ead9b4]/50 blur-3xl motion-glow" />
       <div className="pointer-events-none absolute -start-20 bottom-0 h-36 w-36 rounded-full bg-violet-200/40 blur-3xl" />
       <div className="relative">
         {eyebrow && (
-          <p className="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[.2em] text-teal-600">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-500 anim-pulse-glow" />
-            {t(eyebrow)}
+          <p className="mb-2">
+            <span className="lux-eyebrow">{t(eyebrow)}</span>
           </p>
         )}
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{t(title)}</h1>
@@ -288,7 +287,7 @@ export function SectionTitle({ eyebrow, title, description, align = "center" }) 
   const wrap = align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl";
   return (
     <div className={wrap}>
-      {eyebrow && <p className="text-xs font-extrabold uppercase tracking-[.2em] text-teal-600">{t(eyebrow)}</p>}
+      {eyebrow && <p><span className="lux-eyebrow">{t(eyebrow)}</span></p>}
       <h2 className="section-title mt-3">{t(title)}</h2>
       {description && <p className="mt-4 leading-7 text-slate-500">{t(description)}</p>}
     </div>

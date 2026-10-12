@@ -593,7 +593,8 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
   const templateId = exercise.templateId ?? exercise.id;
   const guide = exerciseGuides[templateId] ?? exerciseGuides[5];
   const [playing, setPlaying] = useState(true);
-  const [reps, setReps] = useState(1);
+  // Reps completed in the current set (starts at 0, like a real counter).
+  const [reps, setReps] = useState(0);
   const [set, setSet] = useState(1);
   const [phase, setPhase] = useState(0);
   const [speed, setSpeed] = useState(1);
@@ -602,6 +603,7 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
   const totalReps = Number(exercise.reps);
   const totalSets = Number(exercise.sets);
   const progress = (((set - 1) * totalReps + reps) / (totalSets * totalReps)) * 100;
+  const isLastRep = set === totalSets && reps === totalReps - 1;
 
   // Resolve the rule file for this plan exercise (or null if we don't support
   // it on camera yet). We look it up by the plan-side id, not by name, so
@@ -621,15 +623,25 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
     return () => window.clearInterval(timer);
   }, [guide.phases.length, playing, speed, cameraMode]);
 
+  // Functional updates so several camera reps in quick succession all count.
+  const repStateRef = useRef({ set: 1, reps: 0, done: false });
   const nextRep = () => {
-    if (reps < totalReps) {
-      setReps(reps + 1);
-    } else if (set < totalSets) {
-      setSet(set + 1);
-      setReps(1);
+    const current = repStateRef.current;
+    if (current.done) return;
+    if (current.reps + 1 < totalReps) {
+      current.reps += 1;
+    } else if (current.set < totalSets) {
+      current.set += 1;
+      current.reps = 0;
     } else {
+      current.reps = totalReps;
+      current.done = true;
+      setReps(current.reps);
       onComplete();
+      return;
     }
+    setSet(current.set);
+    setReps(current.reps);
   };
 
   // The camera pane calls this each time the analyzer credits a rep. We
@@ -686,8 +698,8 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
           <p className="mt-2 text-sm text-slate-500">{exerciseText(exercise, isArabic).area} · {exercise.duration}</p>
           <div className="my-7">
             <div className="mb-2 flex justify-between text-xs font-extrabold">
-              <span>Set {set} of {totalSets}</span>
-              <span>Rep {reps} of {totalReps}</span>
+              <span>{isArabic ? `الجولة ${set} من ${totalSets}` : `Set ${set} of ${totalSets}`}</span>
+              <span>{isArabic ? `التكرار ${reps} من ${totalReps}` : `Rep ${reps} of ${totalReps}`}</span>
             </div>
             <Progress value={progress} />
           </div>
@@ -741,13 +753,13 @@ function GuidedExercise({ exercise, onClose, onComplete }) {
 
           <div className="mt-auto pt-7">
             <button
-              aria-label={set === totalSets && reps === totalReps ? "Finish exercise" : "Complete this rep"}
+              aria-label={isLastRep ? "Finish exercise" : "Complete this rep"}
               onClick={nextRep}
               className="btn-primary w-full py-4"
             >
               <Check size={17} />
-              <span key={set === totalSets && reps === totalReps ? "finish" : "rep"}>
-                {set === totalSets && reps === totalReps ? "Finish exercise" : "Complete this rep"}
+              <span key={isLastRep ? "finish" : "rep"}>
+                {isLastRep ? "Finish exercise" : "Complete this rep"}
               </span>
             </button>
             <button

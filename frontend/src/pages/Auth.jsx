@@ -157,10 +157,47 @@ export function Login() {
   );
 }
 
+// Segmented patient/doctor picker for the sign-up form.
+function RoleSegmented({ value, onChange }) {
+  const { t } = useLanguage();
+  return (
+    <div className="mb-6 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1.5">
+      {[
+        ["patient", UserRound],
+        ["doctor", Stethoscope],
+      ].map(([itemRole, Icon]) => {
+        const active = value === itemRole;
+        return (
+          <button
+            key={itemRole}
+            type="button"
+            onClick={() => onChange(itemRole)}
+            aria-pressed={active}
+            className={`relative flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold capitalize transition ${active ? "text-ink" : "text-slate-400 hover:text-slate-600"}`}
+          >
+            {active && (
+              <motion.span
+                layoutId="role-pill"
+                className="absolute inset-0 rounded-xl bg-white shadow-sm"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative flex items-center gap-2">
+              <Icon size={17} />
+              {t(itemRole)}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 const PROBLEMS = ["Lower back pain", "Neck stiffness", "Shoulder pain", "Joint pain", "Posture correction"];
 const TIMES = ["15 minutes", "20 minutes", "25 minutes", "30 minutes", "40 minutes"];
 
 export function Register() {
+  const [role, setRole] = useState("patient");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -176,17 +213,12 @@ export function Register() {
     }
     setLoading(true);
     try {
-      const session = await api.register({
-        name: form.get("name"),
-        email: form.get("email"),
-        password: form.get("password"),
-        age: form.get("age"),
-        gender: form.get("gender"),
-        problem: form.get("problem"),
-        time: form.get("time"),
-      });
+      const common = { role, name: form.get("name"), email: form.get("email"), password: form.get("password") };
+      const session = await api.register(role === "doctor"
+        ? { ...common, specialty: form.get("specialty"), licenseNumber: form.get("licenseNumber") }
+        : { ...common, age: form.get("age"), gender: form.get("gender"), problem: form.get("problem"), time: form.get("time") });
       setSession(session);
-      navigate("/patient", { replace: true });
+      navigate(homePathFor(session.user), { replace: true });
     } catch (apiError) {
       setError(apiError.message);
       setLoading(false);
@@ -195,40 +227,53 @@ export function Register() {
 
   return (
     <AuthShell title="Create your account" subtitle="A few details and your care journey can begin." wide>
+      <RoleSegmented value={role} onChange={(next) => { setRole(next); setError(""); }} />
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <Input name="name" label="Full name" autoComplete="name" placeholder="Your full name" required />
         <Input name="email" label="Email address" type="email" autoComplete="email" placeholder="you@example.com" required />
-        <PasswordInput name="password" label="Password" autoComplete="new-password" placeholder="At least 8 characters" required />
-        <Input name="age" label="Age" type="number" min="5" max="110" placeholder="28" />
-        <label>
-          <span className="label">{t("Gender")}</span>
-          <select name="gender" className="field" defaultValue="Prefer not to say">
-            {["Prefer not to say", "Female", "Male"].map((value) => <option key={value} value={value}>{t(value)}</option>)}
-          </select>
-        </label>
-        <label>
-          <span className="label">{t("Main physical problem")}</span>
-          <select name="problem" className="field" defaultValue={PROBLEMS[0]}>
-            {PROBLEMS.map((value) => <option key={value} value={value}>{t(value)}</option>)}
-          </select>
-        </label>
-        <label className="md:col-span-2">
-          <span className="label">{t("Daily available time")}</span>
-          <select name="time" className="field" defaultValue="20 minutes">
-            {TIMES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
-          </select>
-        </label>
-        <div className="col-span-full flex items-start gap-4 rounded-3xl border border-teal-100 bg-teal-50/70 p-5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-teal-600 shadow-card">
-            <CreditCard size={17} />
-          </span>
-          <div>
-            <p className="text-sm font-extrabold">{t("Subscription starts after approval")} · 40 ILS</p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {t("Payment collection is intentionally deferred until a doctor approves the care plan, so the current deployment does not collect or store card details.")}
-            </p>
+        {role === "doctor" ? (
+          <>
+            <Input name="specialty" key="doctor-specialty" label="Specialty" placeholder="Physiotherapy" />
+            <Input name="licenseNumber" key="doctor-license" label="Medical license number" placeholder="License number" />
+            <PasswordInput name="password" key="doctor-password" label="Password" autoComplete="new-password" placeholder="At least 8 characters" required />
+          </>
+        ) : (
+          <>
+            <PasswordInput name="password" key="patient-password" label="Password" autoComplete="new-password" placeholder="At least 8 characters" required />
+            <Input name="age" label="Age" type="number" min="5" max="110" placeholder="28" />
+            <label>
+              <span className="label">{t("Gender")}</span>
+              <select name="gender" className="field" defaultValue="Prefer not to say">
+                {["Prefer not to say", "Female", "Male"].map((value) => <option key={value} value={value}>{t(value)}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="label">{t("Main physical problem")}</span>
+              <select name="problem" className="field" defaultValue={PROBLEMS[0]}>
+                {PROBLEMS.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+              </select>
+            </label>
+            <label className="md:col-span-2">
+              <span className="label">{t("Daily available time")}</span>
+              <select name="time" className="field" defaultValue="20 minutes">
+                {TIMES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+              </select>
+            </label>
+          </>
+        )}
+        {role === "patient" && (
+          <div className="col-span-full flex items-start gap-4 rounded-3xl border border-teal-100 bg-teal-50/70 p-5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-teal-600 shadow-card">
+              <CreditCard size={17} />
+            </span>
+            <div>
+              <p className="text-sm font-extrabold">{t("Subscription starts after approval")} · 40 ILS</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {t("Payment collection is intentionally deferred until a doctor approves the care plan, so the current deployment does not collect or store card details.")}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <label className="col-span-full flex items-start gap-3 text-xs leading-5 text-slate-500">
           <input className="mt-1 h-3.5 w-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" type="checkbox" required />
           {t("I agree to the terms and understand that RemedyQuest does not replace professional medical advice.")}
@@ -247,7 +292,7 @@ export function Register() {
           className="btn-primary col-span-full py-4 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading && <span className="spinner" />}
-          {loading ? t("Creating account...") : t("Create my account")}
+          {loading ? t("Creating account...") : t(role === "doctor" ? "Create doctor account" : "Create patient account")}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">

@@ -11,7 +11,7 @@ import { createPoseLandmarker } from "../pose/poseLandmarker";
 import { landmarkIndex } from "../pose/landmarkUtils";
 import {
   averageVisibility,
-  describeFramingIssue,
+  describeExerciseFramingIssue,
   missingLandmarks,
 } from "../utils/visibilityCheck";
 import { createFeedbackStabilizer } from "../utils/smoothing";
@@ -36,31 +36,6 @@ const STATUS = {
   ERROR: "error",
 };
 
-const UPPER_BODY_EXERCISES = new Set(["neckStretch", "armRaise", "elbowBend", "backStretch"]);
-
-function describeExerciseFramingIssue(landmarks, exercise, indexOf) {
-  if (!UPPER_BODY_EXERCISES.has(exercise?.id)) {
-    return describeFramingIssue(landmarks, indexOf);
-  }
-  if (!landmarks || landmarks.length === 0) {
-    return "No person detected. Sit or stand in front of the camera.";
-  }
-  const nose = landmarks[indexOf("nose")];
-  const leftShoulder = landmarks[indexOf("leftShoulder")];
-  const rightShoulder = landmarks[indexOf("rightShoulder")];
-  const visible = (lm) => (lm?.visibility ?? 0) >= 0.45;
-  if (!visible(nose) || !visible(leftShoulder) || !visible(rightShoulder)) {
-    return "Make sure your face and both shoulders are visible.";
-  }
-  if ((nose?.y ?? 1) < 0.04) {
-    return "Move back a little so your head is not cut off.";
-  }
-  if (Math.abs((leftShoulder?.y ?? 0) - (rightShoulder?.y ?? 0)) > 0.16) {
-    return "Face the camera straight on and keep both shoulders visible.";
-  }
-  return null;
-}
-
 function getExerciseSnapshot(exercise, exerciseState) {
   return exercise.snapshot
     ? exercise.snapshot(exerciseState)
@@ -81,7 +56,17 @@ export default function ExerciseCamera() {
   });
 
   const [selectedId, setSelectedId] = useState(exerciseRegistry[0].id);
-  const [status, setStatus] = useState(STATUS.IDLE);
+  const [status, setStatusState] = useState(STATUS.IDLE);
+  // The detection loop reads the status from a ref every frame, so the
+  // analysis runs exactly once per frame (never inside a React updater, which
+  // React may call twice or defer).
+  const statusRef = useRef(STATUS.IDLE);
+  const setStatus = useCallback((next) => {
+    const value = typeof next === "function" ? next(statusRef.current) : next;
+    if (value === statusRef.current) return;
+    statusRef.current = value;
+    setStatusState(value);
+  }, []);
   const [landmarks, setLandmarks] = useState(null);
   const [framingMessage, setFramingMessage] = useState(null);
   const [confidence, setConfidence] = useState(0);
@@ -131,7 +116,7 @@ export default function ExerciseCamera() {
       setStatus(STATUS.ERROR);
       return false;
     }
-  }, []);
+  }, [setStatus]);
 
   // Keep the MediaPipe handle alive for the page lifetime once the user starts
   // the coach, and close it when leaving the page.
@@ -177,9 +162,7 @@ export default function ExerciseCamera() {
         detected ? averageVisibility(detected, ex.requiredLandmarks, indexOf) : 0;
       setConfidence(requiredConfidence);
 
-      // Driven by `status`, not by status state from React closure: we read
-      // it through stateRef-adjacent setters to avoid stale closures.
-      setStatus((current) => {
+      const next = ((current) => {
         const exerciseState = stateRef.current.exerciseState;
         if (current === STATUS.INITIALIZING || current === STATUS.ERROR || current === STATUS.FINISHED) {
           return current;
@@ -240,13 +223,14 @@ export default function ExerciseCamera() {
           setElapsedMs(elapsed);
         }
         return current;
-      });
+      })(statusRef.current);
+      if (next !== statusRef.current) setStatus(next);
 
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return cancel;
-  }, [exercise, indexOf]);
+  }, [exercise, indexOf, setStatus]);
 
   // Save the final session to the backend. We never send raw video — only the
   // aggregated counters and the elapsed time.
@@ -286,12 +270,12 @@ export default function ExerciseCamera() {
     resetExerciseState();
     const ready = await ensureLandmarker();
     if (ready) setStatus(STATUS.CALIBRATING);
-  }, [ensureLandmarker, exercise, resetExerciseState]);
+  }, [ensureLandmarker, exercise, resetExerciseState, setStatus]);
 
   const endSession = useCallback(async () => {
     setStatus(STATUS.FINISHED);
     await persistSession();
-  }, [persistSession]);
+  }, [persistSession, setStatus]);
 
   useEffect(() => {
     if (status !== STATUS.RUNNING) return;
@@ -309,7 +293,7 @@ export default function ExerciseCamera() {
       setStatus(landmarkerRef.current ? STATUS.FRAMING : STATUS.IDLE);
       setSaveStatus(null);
     },
-    [status],
+    [status, setStatus],
   );
 
   const displayStatus = finalSummary ? STATUS.FINISHED : status;

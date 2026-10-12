@@ -86,3 +86,30 @@ export function averageVisibility(landmarks, names, indexOf) {
   }
   return count === 0 ? 0 : total / count;
 }
+
+// Upper-body exercises only need the face and shoulders in frame — asking for
+// the feet would block phone and laptop users sitting close to the camera.
+const UPPER_BODY_EXERCISES = new Set(["neckStretch", "armRaise", "elbowBend", "backStretch"]);
+
+export function describeExerciseFramingIssue(landmarks, exercise, indexOf) {
+  if (!UPPER_BODY_EXERCISES.has(exercise?.id)) {
+    return describeFramingIssue(landmarks, indexOf);
+  }
+  if (!landmarks || landmarks.length === 0) {
+    return "No person detected. Sit or stand in front of the camera.";
+  }
+  const nose = landmarks[indexOf("nose")];
+  const leftShoulder = landmarks[indexOf("leftShoulder")];
+  const rightShoulder = landmarks[indexOf("rightShoulder")];
+  const visible = (lm) => (lm?.visibility ?? 0) >= 0.45;
+  if (!visible(nose) || !visible(leftShoulder) || !visible(rightShoulder)) {
+    return "Make sure your face and both shoulders are visible.";
+  }
+  if ((nose?.y ?? 1) < 0.04) {
+    return "Move back a little so your head is not cut off.";
+  }
+  if (Math.abs((leftShoulder?.y ?? 0) - (rightShoulder?.y ?? 0)) > 0.16) {
+    return "Face the camera straight on and keep both shoulders visible.";
+  }
+  return null;
+}

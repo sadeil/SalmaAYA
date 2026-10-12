@@ -29,6 +29,8 @@ import {
 import { patients as fallbackPatients } from "../data/appData";
 import { CountUp, PageHeader, Progress, Sparkline, StatCard, Status } from "../components/UI";
 import { api } from "../services/api";
+import { useSession } from "../services/session";
+import { useLanguage } from "../i18n/LanguageContext";
 
 function usePatients() {
   const [patients, setPatients] = useState(fallbackPatients);
@@ -47,8 +49,17 @@ function usePatients() {
   return { error, patients, setPatients };
 }
 
+function doctorGreeting(name, isArabic) {
+  const bare = String(name || "").replace(/^(dr\.?|د\.)\s*/i, "").trim();
+  const hour = new Date().getHours();
+  if (isArabic) return `${hour < 12 ? "صباح الخير" : "مساء الخير"}، د. ${bare}`;
+  return `${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}, Dr. ${bare}`;
+}
+
 export function DoctorDashboard() {
   const { error, patients } = usePatients();
+  const session = useSession();
+  const { isArabic } = useLanguage();
   const reviewCount = patients.filter((patient) => patient.status === "Needs review").length;
   const activeCount = patients.filter((patient) => patient.commitment >= 70).length;
 
@@ -56,7 +67,7 @@ export function DoctorDashboard() {
     <>
       <PageHeader
         eyebrow="Clinical overview"
-        title="Good morning, Dr. Aya"
+        title={doctorGreeting(session?.user.name, isArabic)}
         description="Review suggested plans, respond to patients, and keep recovery on track."
         action={<Link to="/doctor/patients" className="btn-primary">Review patient plans <ArrowRight size={16} /></Link>}
       />

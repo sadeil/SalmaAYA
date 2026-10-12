@@ -207,13 +207,15 @@ export function findUserByEmail(db, email) {
 }
 
 export function publicUser(user) {
-  return { id: user.id, name: user.name, email: user.email, role: user.role, demo: Boolean(user.demo) };
+  return { id: user.id, name: user.name, email: user.email, role: user.role, demo: Boolean(user.demo), guest: Boolean(user.guest) };
 }
 
 function userForToken(db, token) {
   if (!token) return null;
   const entry = db.tokens[token];
   if (!entry) return null;
+  // Doctors who sign up get a session only — no stored account.
+  if (entry.guest) return entry.guest;
   return db.users.find((user) => user.id === entry.userId) ?? null;
 }
 
@@ -779,6 +781,23 @@ export async function handleRequest(db, req, deps) {
   try {
     if (route === "GET /health") return ok(deps.health ? deps.health(db) : { status: "ok" });
 
+    if (route === "POST /auth/register" && body.role === "doctor") {
+      // Doctor sign-up opens the doctor area for this session without
+      // storing an account, so the same email can't be used to log in later.
+      const input = validateRegistration(body);
+      const guest = {
+        id: `guest-doctor-${deps.newToken().slice(0, 12)}`,
+        name: input.name,
+        email: input.email,
+        role: "doctor",
+        guest: true,
+        specialty: String(body.specialty ?? "").trim().slice(0, 80) || null,
+      };
+      const token = deps.newToken();
+      db.tokens[token] = { guest, createdAt: now.toISOString() };
+      return ok({ token, user: publicUser(guest) }, 201, true);
+    }
+
     if (route === "POST /auth/register") {
       const input = validateRegistration(body);
       if (findUserByEmail(db, input.email)) {
@@ -936,7 +955,10 @@ export async function handleRequest(db, req, deps) {
 
     // ---- Admin (doctor or admin accounts) ----
     if (path.startsWith("/admin/")) {
-      requireUser(db, req.token, ["admin", "doctor"]);
+      const staff = requireUser(db, req.token, ["admin", "doctor"]);
+      // Self-registered doctors are unverified: keep them out of the
+      // platform-wide data.
+      if (staff.guest) throw new HttpError(403, "FORBIDDEN", "This area is not available for your account.");
       if (route === "GET /admin/dashboard") {
         return ok({
           users: 1284,

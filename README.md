@@ -80,6 +80,10 @@ Anyone can create a patient account from **Get started**. A new patient starts
 from zero — no plan, 0 points, Level 1 — and is guided to build a first plan
 with the AI assistant.
 
+Doctors can also sign up from the same page: that opens the doctor area for
+the session without storing an account, so a doctor signs up again next time.
+Self-registered doctors cannot open the admin database viewer.
+
 Two demo accounts show the prototype data:
 
 | Role    | Email                   | Password     |

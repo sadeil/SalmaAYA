@@ -14,6 +14,7 @@ import { createRepCounter } from "../frontend/src/utils/repCounter.js";
 import { LANDMARK_NAMES, landmarkIndex } from "../frontend/src/pose/landmarkUtils.js";
 import {
   averageVisibility,
+  describeExerciseFramingIssue,
   describeFramingIssue,
   missingLandmarks,
 } from "../frontend/src/utils/visibilityCheck.js";
@@ -512,6 +513,27 @@ console.log("\n[back stretch rule]");
   }
   const snap = backStretchRules.snapshot(state);
   check(`good posture for 11s yields 1 rep (got ${snap.total})`, snap.total >= 1);
+}
+
+// ----- framing for close-up (phone / laptop) upper-body exercises -----
+console.log("\n[upper-body framing]");
+{
+  // Face and shoulders only — the feet are out of frame, as when sitting in
+  // front of a phone. Upper-body exercises must still run (and count reps).
+  const closeUp = blankLandmarks();
+  set(closeUp, "nose", 0.5, 0.3);
+  set(closeUp, "leftEye", 0.47, 0.27);
+  set(closeUp, "rightEye", 0.53, 0.27);
+  set(closeUp, "leftEar", 0.43, 0.29);
+  set(closeUp, "rightEar", 0.57, 0.29);
+  set(closeUp, "leftShoulder", 0.35, 0.55);
+  set(closeUp, "rightShoulder", 0.65, 0.55);
+  const indexOf = (name) => landmarkIndex(name);
+  check("generic check wants the full body", describeFramingIssue(closeUp, indexOf) !== null);
+  for (const rules of [neckStretchRules, armRaiseRules, backStretchRules, elbowBendRules]) {
+    check(`${rules.id} accepts a face-and-shoulders view`, describeExerciseFramingIssue(closeUp, rules, indexOf) === null);
+  }
+  check("lunge still requires the full body", describeExerciseFramingIssue(closeUp, lungeRules, indexOf) !== null);
 }
 
 // ----- summary -----

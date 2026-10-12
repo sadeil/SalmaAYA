@@ -134,7 +134,11 @@ if (await page.locator("html").getAttribute("dir") !== "rtl") fail("language cho
 await page.goto(`${baseURL}/register`, { waitUntil: "networkidle" });
 const registerText = await page.locator("form").innerText();
 if (!registerText.includes("الاسم الكامل")) fail("register form is not translated");
-if (await page.getByRole("button", { name: "طبيب" }).count()) fail("register page still offers doctor sign-up");
+await page.getByRole("button", { name: "طبيب" }).click();
+const doctorRegisterText = await page.locator("form").innerText();
+if (doctorRegisterText.includes("العمر")) fail("doctor registration incorrectly shows age field");
+if (!doctorRegisterText.includes("التخصص") || !doctorRegisterText.includes("رقم الترخيص الطبي")) fail("doctor registration fields are mislabeled in Arabic");
+if (!(await page.locator("form button.btn-primary").innerText()).includes("إنشاء حساب طبيب")) fail("doctor registration button label is wrong");
 await page.getByRole("button", { name: "Switch language" }).click();
 if (await page.locator("html").getAttribute("dir") !== "ltr") fail("language toggle did not restore LTR");
 
@@ -191,10 +195,10 @@ await page.getByPlaceholder("Your full name").fill("Rana Haddad");
 await page.getByPlaceholder("you@example.com").fill(newEmail);
 await page.getByPlaceholder("At least 8 characters").fill("short");
 await page.locator("form input[type=checkbox]").check();
-await page.getByRole("button", { name: "Create my account" }).click();
+await page.getByRole("button", { name: "Create patient account" }).click();
 await page.waitForSelector("text=Password must be at least 8 characters.", { timeout: 5000 }).catch(() => fail("short password was accepted"));
 await page.getByPlaceholder("At least 8 characters").fill("rana-pass-2026");
-await page.getByRole("button", { name: "Create my account" }).click();
+await page.getByRole("button", { name: "Create patient account" }).click();
 await page.waitForURL("**/patient", { timeout: 8000 }).catch(() => fail("registration did not open the patient dashboard"));
 await page.waitForSelector("text=Three steps to your first plan", { timeout: 8000 }).catch(() => fail("new patient does not see the onboarding steps"));
 await expectTexts(["Rana", "0 pts", "Level 1", "0 days", "0 ILS", "No care plan yet"], "new patient dashboard");
@@ -256,7 +260,28 @@ await signOut();
 const duplicate = await page.request.post(`${baseURL}/api/auth/register`, { data: { name: "Again", email: newEmail.toUpperCase(), password: "another-pass" } });
 if (duplicate.status() !== 409) fail(`duplicate registration returned ${duplicate.status()}`);
 
-// ---- 5. Dr. Aya (demo doctor) --------------------------------------------------
+// ---- 5. Doctor sign-up opens the doctor area without storing an account ----
+const doctorEmail = `doctor.${Date.now()}@example.com`;
+await page.goto(`${baseURL}/register`, { waitUntil: "networkidle" });
+await page.getByRole("button", { name: "doctor" }).click();
+await page.getByPlaceholder("Your full name").fill("Karim Nassar");
+await page.getByPlaceholder("you@example.com").fill(doctorEmail);
+await page.getByPlaceholder("Physiotherapy").fill("Physiotherapy");
+await page.getByPlaceholder("License number").fill("PT-12345");
+await page.getByPlaceholder("At least 8 characters").fill("karim-pass-1");
+await page.locator("form input[type=checkbox]").check();
+await page.getByRole("button", { name: "Create doctor account" }).click();
+await page.waitForURL("**/doctor", { timeout: 8000 }).catch(() => fail("doctor registration did not open the doctor dashboard"));
+await expectTexts(["Dr. Karim Nassar", "Omar Saleh"], "new doctor dashboard");
+const guestToken = await page.evaluate(() => JSON.parse(localStorage.getItem("rq-session")).token);
+const guestAdmin = await page.request.get(`${baseURL}/api/admin/database`, { headers: { Authorization: `Bearer ${guestToken}` } });
+if (guestAdmin.status() !== 403) fail(`self-registered doctor could open the admin database (HTTP ${guestAdmin.status()})`);
+await page.locator(".rq-sidebar").getByRole("button", { name: "Sign out" }).click();
+await page.waitForURL(`${baseURL}/`, { timeout: 5000 }).catch(() => {});
+const guestLogin = await page.request.post(`${baseURL}/api/auth/login`, { data: { email: doctorEmail, password: "karim-pass-1" } });
+if (guestLogin.status() !== 401) fail(`doctor sign-up stored an account (login HTTP ${guestLogin.status()})`);
+
+// ---- 6. Dr. Aya (demo doctor) --------------------------------------------------
 await logIn(AYA, "/doctor");
 for (const route of ["/doctor", "/doctor/patients", "/doctor/patients/1", "/doctor/messages", "/admin"]) await visit(route);
 await page.goto(`${baseURL}/patient`, { waitUntil: "networkidle" });
@@ -274,6 +299,7 @@ else {
   if (raw.includes("passwordHash") || raw.includes("scrypt$")) fail("admin database API leaks password hashes");
   if (!snapshot.status?.connected) fail("admin database API reports disconnected database");
   if (!snapshot.tables?.users?.some((user) => user.email === newEmail)) fail("registered patient is missing from the users table");
+  if (snapshot.tables?.users?.some((user) => user.email === doctorEmail)) fail("self-registered doctor was stored as a user");
   if (!snapshot.tables?.messages?.length) fail("admin database API missing messages table");
   if (!snapshot.tables?.exercises?.length) fail("admin database API missing exercises table");
 }

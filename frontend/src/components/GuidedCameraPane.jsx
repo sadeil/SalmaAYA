@@ -6,7 +6,7 @@ import { createPoseLandmarker } from "../pose/poseLandmarker";
 import { landmarkIndex } from "../pose/landmarkUtils";
 import {
   averageVisibility,
-  describeFramingIssue,
+  describeExerciseFramingIssue,
   missingLandmarks,
 } from "../utils/visibilityCheck";
 import { createFeedbackStabilizer } from "../utils/smoothing";
@@ -35,7 +35,17 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
   });
 
   const [landmarks, setLandmarks] = useState(null);
-  const [status, setStatus] = useState("initializing");
+  const [status, setStatusState] = useState("initializing");
+  // The detection loop reads the status from a ref every frame, so the
+  // analysis runs exactly once per frame (never inside a React updater, which
+  // React may call twice or defer).
+  const statusRef = useRef("initializing");
+  const setStatus = useCallback((next) => {
+    const value = typeof next === "function" ? next(statusRef.current) : next;
+    if (value === statusRef.current) return;
+    statusRef.current = value;
+    setStatusState(value);
+  }, []);
   const [framingMessage, setFramingMessage] = useState(null);
   const [calibrationProgress, setCalibrationProgress] = useState(0);
   const [confidence, setConfidence] = useState(0);
@@ -67,7 +77,7 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
       landmarkerRef.current?.close();
       landmarkerRef.current = null;
     };
-  }, []);
+  }, [setStatus]);
 
   // Reset analyzer state whenever the selected exercise rule changes.
   useEffect(() => {
@@ -80,7 +90,7 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
     setCalibrationProgress(0);
     setLiveFeedback(null);
     setStatus((current) => (current === "initializing" || current === "error" ? current : "framing"));
-  }, [exercise]);
+  }, [exercise, setStatus]);
 
   // Detection loop. We deliberately keep this in one rAF rather than wiring
   // each piece through React state — the loop must hit ~30fps without churn.
@@ -109,7 +119,7 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
       const detected = detection?.landmarks ?? null;
       setLandmarks(detected);
 
-      const framing = describeFramingIssue(detected, indexOf);
+      const framing = describeExerciseFramingIssue(detected, ex, indexOf);
       const missing = detected
         ? missingLandmarks(detected, ex.requiredLandmarks, indexOf)
         : ex.requiredLandmarks.slice();
@@ -117,7 +127,7 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
         detected ? averageVisibility(detected, ex.requiredLandmarks, indexOf) : 0;
       setConfidence(requiredConfidence);
 
-      setStatus((current) => {
+      const next = ((current) => {
         const exerciseState = sessionRef.current.exerciseState;
         if (current === "initializing" || current === "error") return current;
 
@@ -176,14 +186,15 @@ export function GuidedCameraPane({ exercise, onRepCounted }) {
           }
         }
         return current;
-      });
+      })(statusRef.current);
+      if (next !== statusRef.current) setStatus(next);
 
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
     return cancel;
-  }, [exercise, indexOf]);
+  }, [exercise, indexOf, setStatus]);
 
   return (
     <div className="relative h-[68vh] min-h-[420px] w-full overflow-hidden rounded-t-[2rem] bg-ink lg:h-full lg:rounded-none lg:rounded-s-[2rem]">

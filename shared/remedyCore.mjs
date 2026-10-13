@@ -38,6 +38,8 @@ const DEMO_DOCTOR_PATIENTS = [
 ];
 
 const DEMO_PROGRESS = [45, 62, 55, 78, 72, 88, 92];
+const DEMO_POINTS_TREND = [60, 65, 62, 70, 74, 78, 82];
+const DEMO_WEEK_POINTS = 10;
 
 export class HttpError extends Error {
   constructor(status, code, message) {
@@ -294,6 +296,27 @@ function weekProgress(record, now) {
   return days;
 }
 
+// Total points at the end of each of the last 7 days.
+function pointsTrend(record, now) {
+  if (record.demo) {
+    const extra = record.points - 82;
+    return DEMO_POINTS_TREND.map((value, index) => (index === 6 ? value + extra : value));
+  }
+  const trend = [];
+  let total = record.points;
+  for (let offset = 0; offset <= 6; offset += 1) {
+    trend.unshift(total);
+    total -= record.activity[dayKey(now.getTime() - offset * DAY_MS)] || 0;
+  }
+  return trend;
+}
+
+function weekPoints(record, now) {
+  let sum = record.demo ? DEMO_WEEK_POINTS : 0;
+  for (let offset = 0; offset <= 6; offset += 1) sum += record.activity[dayKey(now.getTime() - offset * DAY_MS)] || 0;
+  return sum;
+}
+
 function minutesOf(duration) {
   const match = String(duration ?? "").match(/\d+/);
   return match ? Number(match[0]) : 0;
@@ -317,7 +340,8 @@ export function patientOverview(user, record, now = new Date()) {
     streak,
     refundIls,
     exercisesCompleted: record.exercisesCompleted,
-    weekPoints: progress.reduce((sum, day) => sum + day.score, 0),
+    weekPoints: weekPoints(record, now),
+    pointsTrend: pointsTrend(record, now),
   };
   const badges = [
     { key: "streak", label: streak >= 3 ? `${streak}-day streak` : "3-day streak", earned: streak >= 3 },

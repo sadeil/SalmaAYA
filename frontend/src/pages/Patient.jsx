@@ -90,14 +90,6 @@ function useText() {
   return (en, ar) => (isArabic ? ar : en);
 }
 
-function cumulative(progress, total) {
-  let running = total - progress.reduce((sum, day) => sum + day.score, 0);
-  return progress.map((day) => {
-    running += day.score;
-    return Math.max(0, running);
-  });
-}
-
 function PageSkeleton() {
   return (
     <div className="space-y-5">
@@ -121,7 +113,6 @@ export function PatientDashboard() {
 
   const { stats, plan, exercises, profile, progress } = overview;
   const hasPlan = plan.total > 0;
-  const pointsTrend = cumulative(progress, stats.points);
 
   return (
     <>
@@ -145,7 +136,7 @@ export function PatientDashboard() {
           label="Current points"
           value={L(`${stats.points} pts`, `${stats.points} نقطة`)}
           note={stats.weekPoints ? L(`+${stats.weekPoints} this week`, `+${stats.weekPoints} هذا الأسبوع`) : L("+5 per exercise", "+5 لكل تمرين")}
-          trend={stats.points ? pointsTrend : undefined}
+          trend={stats.points ? stats.pointsTrend : undefined}
         />
         <StatCard
           icon={Trophy}
@@ -1542,13 +1533,13 @@ export function Refunds() {
               {L(`${rewards.percent}% of subscription recovered`, `تم استرداد ${rewards.percent}% من الاشتراك`)}
             </h3>
           </div>
-          <p className="text-2xl font-extrabold text-teal-600" dir="ltr">{rewards.refundIls} / {rewards.subscriptionIls}</p>
+          <p className="shrink-0 whitespace-nowrap text-2xl font-extrabold text-teal-600" dir="ltr">{rewards.refundIls} / {rewards.subscriptionIls}</p>
         </div>
         <div className="mt-6">
           <Progress value={rewards.percent} />
         </div>
       </div>
-      <div className="card mt-5 overflow-x-auto">
+      <div className="card mt-5">
         <h3 className="mb-5 text-xl font-extrabold">Reward history</h3>
         {rewards.history.length === 0 ? (
           <EmptyState
@@ -1558,7 +1549,20 @@ export function Refunds() {
             action={<Link to="/patient/exercises" className="btn-soft">Go to my exercises</Link>}
           />
         ) : (
-          <table className="w-full min-w-[650px] text-start text-sm">
+          <>
+          <ul className="space-y-3 sm:hidden">
+            {rewards.history.map((reward) => (
+              <li key={reward.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-4">
+                <div>
+                  <p className="font-extrabold">{L(reward.label, reward.label.replace(/^Level (\d+) milestone$/, "إنجاز المستوى $1"))}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(reward.date)} · {ils(reward.amount)}</p>
+                </div>
+                <Status>{reward.status}</Status>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto sm:block">
+          <table className="w-full min-w-[560px] text-start text-sm">
             <thead className="text-xs uppercase tracking-wide text-slate-400">
               <tr>
                 <th className="pb-4 text-start">Reward</th>
@@ -1578,6 +1582,8 @@ export function Refunds() {
               ))}
             </tbody>
           </table>
+          </div>
+          </>
         )}
       </div>
     </>
@@ -1648,7 +1654,7 @@ export function MessagesPage() {
         title="Your care conversation"
         description="Stay connected with your doctor between reviews."
       />
-      <div className="card grid min-h-[650px] overflow-hidden p-0 md:grid-cols-[280px_1fr]">
+      <div className="card grid min-h-[650px] grid-rows-[auto_1fr] overflow-hidden p-0 md:grid-cols-[280px_1fr] md:grid-rows-1">
         <aside className="border-b bg-slate-50/60 p-4 md:border-b-0 md:border-r">
           <div className="rounded-2xl bg-white p-3 shadow-card ring-1 ring-teal-100">
             <div className="flex items-center gap-3">

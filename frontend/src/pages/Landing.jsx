@@ -8,6 +8,7 @@ import {
 import { Footer, PublicNav } from "../components/Layout";
 import { CountUp, SectionTitle } from "../components/UI";
 import { homePathFor, useSession } from "../services/session";
+import { useLanguage } from "../i18n/LanguageContext";
 
 // Feature grid copy — same content as before but now wrapped in a scroll
 // reveal and tilt-on-hover container.
@@ -66,6 +67,9 @@ export default function Landing() {
   const heroRef = useRef(null);
   const reduced = useReducedMotion();
   const session = useSession();
+  const { isArabic } = useLanguage();
+  // Currency inside animated numbers isn't reached by the text translator.
+  const money = (value) => (isArabic ? String(value).replace("ILS", "شيكل") : value);
 
   // Mouse-tracked spotlight on the hero — sets CSS variables that the
   // gradient overlay reads.
@@ -146,7 +150,7 @@ export default function Landing() {
                   className="metric-chip"
                 >
                   <p className="text-xl font-extrabold text-ink">
-                    <CountUp value={value} />
+                    <CountUp value={money(value)} />
                   </p>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
                     {label}
@@ -220,7 +224,7 @@ export default function Landing() {
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-3">
-                  {[["82", "points"], ["12", "day streak"], ["5 ILS", "earned"]].map(([v, l]) => (
+                  {[["82", "points"], ["12", "day streak"], [money("5 ILS"), "earned"]].map(([v, l]) => (
                     <div key={l} className="rounded-2xl bg-white/70 p-3 text-center">
                       <p className="font-extrabold">
                         <CountUp value={v} />

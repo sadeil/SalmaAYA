@@ -267,7 +267,7 @@ export function Register() {
               <CreditCard size={17} />
             </span>
             <div>
-              <p className="text-sm font-extrabold">{t("Subscription starts after approval")} · 40 ILS</p>
+              <p className="text-sm font-extrabold">{t("Subscription starts after approval")} · {t("40 ILS")}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 {t("Payment collection is intentionally deferred until a doctor approves the care plan, so the current deployment does not collect or store card details.")}
               </p>
